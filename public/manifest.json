@@ -1,0 +1,16 @@
+{
+    "name": "Sistema de Anamnese Inteligente",
+    "short_name": "Agendha",
+    "description": "Sistema médico offline-first para registro de consultas com suporte completo a gravação de áudio e geração de templates dinâmicos.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#059669",
+    "icons": [
+        {
+            "src": "/favicon.ico",
+            "sizes": "64x64 32x32 24x24 16x16",
+            "type": "image/x-icon"
+        }
+    ]
+}
