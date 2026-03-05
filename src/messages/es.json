@@ -1,0 +1,106 @@
+{
+    "Dashboard": {
+        "title": "Estadísticas Rápidas",
+        "totalRecords": "Total de Anamnesis",
+        "recentVolume": "Atenciones (7 Días)",
+        "topTemplate": "Plantilla Más Usada",
+        "none": "Ninguna"
+    },
+    "Settings": {
+        "title": "Perfil y Preferencias",
+        "roleLabel": "Perfil de Uso",
+        "doctorRole": "Médico Profesional",
+        "patientRole": "Paciente / Personal",
+        "fullName": "Nombre Completo",
+        "crm": "Licencia Médica",
+        "specialty": "Especialidad",
+        "language": "Idioma Dinámico (i18n)",
+        "exportData": "Exportación y Respaldo",
+        "backupDb": "Copia de Seguridad (dev.db)",
+        "exportCsv": "Exportar Historial (CSV)",
+        "save": "Guardar Datos",
+        "saving": "Guardando...",
+        "cancel": "Cancelar"
+    },
+    "TemplateForm": {
+        "patientName": "Nombre del Paciente",
+        "consultDate": "Fecha de la Consulta",
+        "selectTemplate": "Seleccione una plantilla para comenzar",
+        "describe": "Describa",
+        "inform": "Ingrese",
+        "clear": "Limpiar",
+        "processing": "Procesando...",
+        "reviewExport": "Revisar y Exportar"
+    },
+    "InsightsModal": {
+        "title": "Revisión e Insights Clínicos",
+        "filledData": "Datos Completados",
+        "aiInsights": "Insights de la IA",
+        "generating": "Generando insights clínicos...",
+        "cidLabel": "Sugerencias CIE-10",
+        "noCid": "Ninguna sugerencia generada",
+        "hypothesisLabel": "Hipótesis Diagnóstica",
+        "hypothesisPlaceholder": "La IA sugerirá una hipótesis basada en los datos...",
+        "conductLabel": "Conducta Sugerida",
+        "conductPlaceholder": "La IA sugerirá exámenes o tratamientos...",
+        "obsLabel": "Observaciones Generales",
+        "obsPlaceholder": "Agregue notas, recetas informales o recordatorios...",
+        "cancel": "Volver",
+        "email": "Correo",
+        "pdfCompact": "PDF Resumen",
+        "pdfFull": "PDF Completo"
+    },
+    "Home": {
+        "title": "Projetinho",
+        "subtitle": "Anamnesis Inteligente PWA",
+        "fillStructure": "Estructura de Llenado",
+        "recentConsults": "Consultas Recientes",
+        "localBadge": "Local",
+        "footer": "Modo Offline-First Activado. Todo el procesamiento ocurre en su dispositivo."
+    },
+    "Header": {
+        "switchProfile": "Cambiar Perfil",
+        "settingsLabel": "Configuración Profesional"
+    },
+    "TemplateSelector": {
+        "available": "Plantillas Disponibles",
+        "default": "Predeterminado",
+        "createNew": "Crear nueva plantilla personalizada",
+        "confirmDelete": "¿Está seguro de que desea eliminar permanentemente esta plantilla?"
+    },
+    "ConsultasList": {
+        "noRecords": "Sin registros de anamnesis aún.",
+        "export": "Exportar",
+        "details": "Detalles",
+        "delete": "Eliminar",
+        "deleteTitle": "Eliminar Anamnesis",
+        "deleteMessage": "¿Está seguro de que desea borrar este historial? Esta acción es irreversible.",
+        "deleted": "Eliminado",
+        "deletedMsg": "Registro eliminado.",
+        "compactReport": "Informe Compacto",
+        "compactDesc": "Texto consolidado en cuadrícula limpia",
+        "fullReport": "Informe Completo",
+        "fullDesc": "Tabla detallada y rayada",
+        "anamneseOf": "Anamnesis"
+    },
+    "TemplatePage": {
+        "title": "Nueva Plantilla",
+        "subtitle": "Cree una evaluación clínica personalizada.",
+        "back": "Volver",
+        "aiTitle": "Generar Estructura con IA",
+        "aiSubtitle": "Escriba o hable la especialidad para armar la plantilla ideal.",
+        "generate": "Generar",
+        "generating": "Generando...",
+        "templateName": "Nombre de la Plantilla",
+        "templateNamePlaceholder": "Ej: Cardiología - Primera Vez",
+        "description": "Descripción Breve",
+        "descriptionPlaceholder": "Ej: Enfoque en hábitos de vida e hipertensión",
+        "fieldsTitle": "Campos de la Anamnesis (JSONB)",
+        "addField": "+ Campo",
+        "fieldId": "ID Clínico (Para IA)",
+        "fieldLabel": "Título Visual (UI)",
+        "fieldLabelPlaceholder": "Ej: Historia Patológica",
+        "saving": "Guardando localmente...",
+        "saveBtn": "Guardar Plantilla Estructurada"
+    }
+}

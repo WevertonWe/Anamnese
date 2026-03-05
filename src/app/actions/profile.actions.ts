@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 export async function getDoctorProfile() {
     try {
         const profile = await prisma.doctorProfile.findFirst();
-        return profile || { fullName: '', crm: '', specialty: '', signatureAlign: 'center', showLogoText: true, role: 'doctor', aiModel: 'gemini-1.5-flash' };
+        return profile || { fullName: '', crm: '', specialty: '', signatureAlign: 'center', showLogoText: true, role: 'doctor', aiModel: 'gemini-1.5-flash', language: 'pt' };
     } catch (err) {
         return null;
     }
@@ -19,7 +19,8 @@ export async function saveDoctorProfile(data: {
     signatureAlign?: string,
     showLogoText?: boolean,
     role?: string,
-    aiModel?: string
+    aiModel?: string,
+    language?: string
 }) {
     try {
         // Como o sistema é local/single user, verificamos se já existe um perfil
@@ -35,7 +36,8 @@ export async function saveDoctorProfile(data: {
                     signatureAlign: data.signatureAlign,
                     showLogoText: data.showLogoText,
                     role: data.role,
-                    aiModel: data.aiModel
+                    aiModel: data.aiModel,
+                    language: data.language
                 }
             });
         } else {
@@ -47,7 +49,8 @@ export async function saveDoctorProfile(data: {
                     signatureAlign: data.signatureAlign,
                     showLogoText: data.showLogoText,
                     role: data.role || 'doctor',
-                    aiModel: data.aiModel || 'gemini-1.5-flash'
+                    aiModel: data.aiModel || 'gemini-1.5-flash',
+                    language: data.language || 'pt'
                 }
             });
         }

@@ -24,6 +24,7 @@ model DoctorProfile {
   fullName       String
   crm            String
   specialty      String
+  language       String   @default("pt")
   
   // PDF Preferences
   signatureAlign String   @default("center") // "left", "center", "right"
@@ -44,6 +45,10 @@ model Template {
   // JSONB Field to store flexible schema of the template
   // Example: [{ id: "hda", label: "História", type: "textarea" }]
   schema      String
+  
+  // JSONB Field to store translations for the schema labels
+  // Example: { "en": { "hda": "History" }, "es": { "hda": "Historia" } }
+  translations String?
   
   userId      String?
   user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)

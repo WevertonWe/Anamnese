@@ -58,9 +58,25 @@ export async function generateAnamnesis(data: GenerateAnamnesisRequest) {
             expectedFormatStr += `- "${safeKey}": string (Extrair a informação: ${field.label || 'Vazio'})\n`;
         });
 
-        dynamicProperties["cid_sugerido"] = { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Lista de referências CID 10 extraídas se aplicável." };
+        dynamicProperties["cid_sugerido"] = { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Lista de referências CID-10 extraídas ou deduzidas se aplicável." };
         requiredFields.push("cid_sugerido");
         expectedFormatStr += `- "cid_sugerido": array de strings\n`;
+
+        dynamicProperties["hipotese_diagnostica"] = { type: SchemaType.STRING, description: "Resumo da hipótese diagnóstica baseada nos sintomas e relato do paciente." };
+        requiredFields.push("hipotese_diagnostica");
+        expectedFormatStr += `- "hipotese_diagnostica": string\n`;
+
+        dynamicProperties["conduta_sugerida"] = { type: SchemaType.STRING, description: "Lista de condutas sugeridas: prescrições, encaminhamentos, atestados ou exames pedidos." };
+        requiredFields.push("conduta_sugerida");
+        expectedFormatStr += `- "conduta_sugerida": string\n`;
+
+        dynamicProperties["patient_name_extracted"] = { type: SchemaType.STRING, description: "Nome do paciente extraído da fala (ex: 'paciente Carlos'). Se não falado, deixe vazio." };
+        requiredFields.push("patient_name_extracted");
+        expectedFormatStr += `- "patient_name_extracted": string (Nome do paciente se citado)\n`;
+
+        dynamicProperties["consult_date_extracted"] = { type: SchemaType.STRING, description: "Data do atendimento falada na gravação (ex: '29 de fevereiro de 2026'). IMPORTANTE: Devolva APENAS no formato YYYY-MM-DD. Se ano omitido, assuma ano atual. Se nenhuma data falada, deixe vazio." };
+        requiredFields.push("consult_date_extracted");
+        expectedFormatStr += `- "consult_date_extracted": string (Formato YYYY-MM-DD)\n`;
 
         // 3 - Construção do System Prompt Médico Especializado
         const systemInstruction = `
@@ -71,6 +87,7 @@ INDIRETRIZES:
 - Extraia apenas fatos clínicos presentes no texto. Não invente sintomas.
 - Se uma informação vital faltar baseada na transcrição, preencha com "Não relatado".
 - Se houver negação clínica (ex: 'nega febre'), deixe isso explícito.
+- CID-10 MAXIMIZADO: Deduza com máxima precisão diagnóstica quais os CIDs aplicáveis ao relato falado preenchendo o array "cid_sugerido".
 - Adapte-se estritamente às chaves abaixo solicitadas pelo modelo médico:
 
 CHAVES ESPERADAS NO JSON OBRIGATÓRIAS:
@@ -145,6 +162,10 @@ ${expectedFormatStr}
             finalResponse[field.id] = mockAiResponse[sanitizeKey(field.id)] || mockAiResponse[field.id] || "";
         });
         finalResponse["cid_sugerido"] = mockAiResponse["cid_sugerido"] || [];
+        finalResponse["hipotese_diagnostica"] = mockAiResponse["hipotese_diagnostica"] || "";
+        finalResponse["conduta_sugerida"] = mockAiResponse["conduta_sugerida"] || "";
+        finalResponse["patient_name_extracted"] = mockAiResponse["patient_name_extracted"] || "";
+        finalResponse["consult_date_extracted"] = mockAiResponse["consult_date_extracted"] || "";
 
         console.log("✅ Dados da IA interceptados com sucesso e devolvidos para a tela");
 

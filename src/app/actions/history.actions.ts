@@ -31,12 +31,13 @@ export async function deleteRecord(id: string) {
     }
 }
 
-export async function saveRecord(data: { patientName: string; templateId: string; data: any }) {
+export async function saveRecord(data: { patientName: string; templateId: string; date?: string; data: any }) {
     try {
         const newRecord = await prisma.patientRecord.create({
             data: {
                 patientName: data.patientName || "Paciente Não Identificado",
                 templateId: data.templateId,
+                date: data.date ? new Date(data.date) : new Date(),
                 data: JSON.stringify(data.data)
             },
             include: { template: true }

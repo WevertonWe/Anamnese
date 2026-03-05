@@ -1,0 +1,106 @@
+{
+    "Dashboard": {
+        "title": "Quick Stats",
+        "totalRecords": "Total Anamnesis",
+        "recentVolume": "Volume (7 Days)",
+        "topTemplate": "Most Used Template",
+        "none": "None"
+    },
+    "Settings": {
+        "title": "Profile and Preferences",
+        "roleLabel": "Usage Profile",
+        "doctorRole": "Medical Professional",
+        "patientRole": "Patient / Personal",
+        "fullName": "Full Name",
+        "crm": "Medical License / NPI",
+        "specialty": "Specialty",
+        "language": "Dynamic Language (i18n)",
+        "exportData": "Export & Backup",
+        "backupDb": "Database Backup (dev.db)",
+        "exportCsv": "Export History (CSV)",
+        "save": "Save Data",
+        "saving": "Saving...",
+        "cancel": "Cancel"
+    },
+    "TemplateForm": {
+        "patientName": "Patient Name",
+        "consultDate": "Date of Consultation",
+        "selectTemplate": "Select a template to begin",
+        "describe": "Describe",
+        "inform": "Enter",
+        "clear": "Clear",
+        "processing": "Processing...",
+        "reviewExport": "Review & Export"
+    },
+    "InsightsModal": {
+        "title": "Review and Clinical Insights",
+        "filledData": "Filled Data",
+        "aiInsights": "AI Insights",
+        "generating": "Generating clinical insights...",
+        "cidLabel": "ICD-10 Suggestions",
+        "noCid": "No suggestions generated",
+        "hypothesisLabel": "Diagnostic Hypothesis",
+        "hypothesisPlaceholder": "AI will suggest a hypothesis based on the data...",
+        "conductLabel": "Suggested Conduct",
+        "conductPlaceholder": "AI will suggest exams or treatments...",
+        "obsLabel": "General Observations",
+        "obsPlaceholder": "Add notes, informal prescriptions, or reminders...",
+        "cancel": "Back",
+        "email": "Email",
+        "pdfCompact": "PDF Summary",
+        "pdfFull": "PDF Full"
+    },
+    "Home": {
+        "title": "Projetinho",
+        "subtitle": "Intelligent Anamnesis PWA",
+        "fillStructure": "Fill Structure",
+        "recentConsults": "Recent Consultations",
+        "localBadge": "Local",
+        "footer": "Offline-First Mode Enabled. All processing happens on your device."
+    },
+    "Header": {
+        "switchProfile": "Switch Profile",
+        "settingsLabel": "Professional Settings"
+    },
+    "TemplateSelector": {
+        "available": "Available Templates",
+        "default": "Default",
+        "createNew": "Create new custom template",
+        "confirmDelete": "Are you sure you want to permanently delete this template?"
+    },
+    "ConsultasList": {
+        "noRecords": "No anamnesis records yet.",
+        "export": "Export",
+        "details": "Details",
+        "delete": "Delete",
+        "deleteTitle": "Delete Anamnesis",
+        "deleteMessage": "Are you sure you want to delete this record? This action is irreversible.",
+        "deleted": "Deleted",
+        "deletedMsg": "Record removed.",
+        "compactReport": "Compact Report",
+        "compactDesc": "Clean grid consolidated text",
+        "fullReport": "Full Report",
+        "fullDesc": "Detailed striped table",
+        "anamneseOf": "Anamnesis"
+    },
+    "TemplatePage": {
+        "title": "New Template",
+        "subtitle": "Create a custom clinical assessment.",
+        "back": "Back",
+        "aiTitle": "Generate Structure with AI",
+        "aiSubtitle": "Type or speak the specialty to build the ideal template.",
+        "generate": "Generate",
+        "generating": "Generating...",
+        "templateName": "Template Name",
+        "templateNamePlaceholder": "E.g.: Cardiology - First Visit",
+        "description": "Brief Description",
+        "descriptionPlaceholder": "E.g.: Focus on lifestyle habits and hypertension",
+        "fieldsTitle": "Anamnesis Fields (JSONB)",
+        "addField": "+ Field",
+        "fieldId": "Clinical ID (For AI)",
+        "fieldLabel": "Visual Title (UI)",
+        "fieldLabelPlaceholder": "E.g.: Pathological History",
+        "saving": "Saving locally...",
+        "saveBtn": "Save Structured Template"
+    }
+}

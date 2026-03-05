@@ -1,0 +1,106 @@
+{
+    "Dashboard": {
+        "title": "Estatísticas Rápidas",
+        "totalRecords": "Total de Anamneses",
+        "recentVolume": "Atendimentos (7 Dias)",
+        "topTemplate": "Template Mais Utilizado",
+        "none": "Nenhum"
+    },
+    "Settings": {
+        "title": "Perfil e Preferências",
+        "roleLabel": "Perfil de Uso",
+        "doctorRole": "Médico Profissional",
+        "patientRole": "Paciente / Pessoal",
+        "fullName": "Nome Completo",
+        "crm": "Registro Médico",
+        "specialty": "Especialidade",
+        "language": "Idioma Dinâmico (i18n)",
+        "exportData": "Exportação e Backup",
+        "backupDb": "Backup do Banco (dev.db)",
+        "exportCsv": "Exportar Histórico (CSV)",
+        "save": "Salvar Dados",
+        "saving": "Salvando...",
+        "cancel": "Cancelar"
+    },
+    "TemplateForm": {
+        "patientName": "Nome do Paciente",
+        "consultDate": "Data da Consulta",
+        "selectTemplate": "Selecione um template ao lado para iniciar",
+        "describe": "Descreva",
+        "inform": "Informe",
+        "clear": "Limpar",
+        "processing": "Processando...",
+        "reviewExport": "Revisar e Exportar"
+    },
+    "InsightsModal": {
+        "title": "Revisão e Insights Clínicos",
+        "filledData": "Dados Preenchidos",
+        "aiInsights": "Insights da IA",
+        "generating": "Gerando insights clínicos...",
+        "cidLabel": "Sugestões CID-10",
+        "noCid": "Nenhuma sugestão gerada",
+        "hypothesisLabel": "Hipótese Diagnóstica",
+        "hypothesisPlaceholder": "A IA sugerirá uma hipótese baseada nos dados...",
+        "conductLabel": "Conduta Sugerida",
+        "conductPlaceholder": "A IA sugerirá exames ou tratamentos...",
+        "obsLabel": "Observações Gerais",
+        "obsPlaceholder": "Adicione notas, prescrições informais ou lembretes...",
+        "cancel": "Voltar",
+        "email": "E-mail",
+        "pdfCompact": "PDF Resumo",
+        "pdfFull": "PDF Completo"
+    },
+    "Home": {
+        "title": "Projetinho",
+        "subtitle": "Anamnese Inteligente PWA",
+        "fillStructure": "Estrutura de Preenchimento",
+        "recentConsults": "Consultas Recentes",
+        "localBadge": "Local",
+        "footer": "Modo Offline-First Ativado. Todo processamento ocorre no seu dispositivo."
+    },
+    "Header": {
+        "switchProfile": "Trocar Perfil",
+        "settingsLabel": "Configurações do Profissional"
+    },
+    "TemplateSelector": {
+        "available": "Templates Disponíveis",
+        "default": "Padrão",
+        "createNew": "Criar novo template personalizado",
+        "confirmDelete": "Tem certeza que deseja excluir permanentemente este template?"
+    },
+    "ConsultasList": {
+        "noRecords": "Nenhuma anamnese registrada ainda.",
+        "export": "Exportar",
+        "details": "Detalhes",
+        "delete": "Excluir",
+        "deleteTitle": "Excluir Anamnese",
+        "deleteMessage": "Tem certeza que deseja apagar este histórico? Esta ação é irreversível.",
+        "deleted": "Excluído",
+        "deletedMsg": "Registro removido.",
+        "compactReport": "Relatório Compacto",
+        "compactDesc": "Texto consolidado em grid limpo",
+        "fullReport": "Relatório Completo",
+        "fullDesc": "Tabela detalhada e zebrada",
+        "anamneseOf": "Anamnese"
+    },
+    "TemplatePage": {
+        "title": "Novo Template",
+        "subtitle": "Crie uma avaliação clínica personalizada.",
+        "back": "Voltar",
+        "aiTitle": "Gerar Estrutura com IA",
+        "aiSubtitle": "Digite ou fale a especialidade para montarmos o template ideal.",
+        "generate": "Gerar",
+        "generating": "Gerando...",
+        "templateName": "Nome do Template",
+        "templateNamePlaceholder": "Ex: Cardiologia - Primeira Vez",
+        "description": "Descrição Breve",
+        "descriptionPlaceholder": "Ex: Foco nos hábitos de vida e hipertensão",
+        "fieldsTitle": "Campos da Anamnese (JSONB)",
+        "addField": "+ Campo",
+        "fieldId": "ID Clínico (Para IA)",
+        "fieldLabel": "Título Visual (UI)",
+        "fieldLabelPlaceholder": "Ex: História Patológica",
+        "saving": "Salvando localmente...",
+        "saveBtn": "Salvar Template Estruturado"
+    }
+}

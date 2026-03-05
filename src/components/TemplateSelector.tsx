@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { getTemplates, deleteTemplate } from '@/app/actions/template.actions';
 import { getUserRole } from '@/app/actions/auth.actions';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export default function TemplateSelector({ onSelect }: { onSelect?: (id: string) => void }) {
+    const t = useTranslations('TemplateSelector');
     const router = useRouter();
     const [templates, setTemplates] = useState<Record<string, unknown>[]>([]);
     const [loading, setLoading] = useState(true);
@@ -35,7 +37,7 @@ export default function TemplateSelector({ onSelect }: { onSelect?: (id: string)
 
     const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (confirm("Tem certeza que deseja excluir permanentemente este template?")) {
+        if (confirm(t('confirmDelete'))) {
             setLoading(true);
             await deleteTemplate(id);
             if (selectedId === id) setSelectedId(null);
@@ -51,7 +53,7 @@ export default function TemplateSelector({ onSelect }: { onSelect?: (id: string)
         <div className="w-full flex justify-center mt-6">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 w-full max-w-md mx-auto">
                 <h3 className="font-semibold text-slate-800 mb-4 flex items-center justify-between">
-                    <span>Templates Disponíveis</span>
+                    <span>{t('available')}</span>
                     <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">{templates.length}</span>
                 </h3>
 
@@ -76,12 +78,12 @@ export default function TemplateSelector({ onSelect }: { onSelect?: (id: string)
                                             <button
                                                 onClick={(e) => handleDelete(e, String(tpl.id))}
                                                 className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                                                title="Excluir template"
+                                                title={t('confirmDelete')}
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                             </button>
                                         )}
-                                        {Boolean(tpl.isDefault) && <span className="text-[10px] font-bold text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded uppercase">Padrão</span>}
+                                        {Boolean(tpl.isDefault) && <span className="text-[10px] font-bold text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded uppercase">{t('default')}</span>}
                                         {isSelected && (
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-emerald-600 bg-emerald-100 rounded-full p-0.5 animate-in zoom-in" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -109,7 +111,7 @@ export default function TemplateSelector({ onSelect }: { onSelect?: (id: string)
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
-                            <span className="text-sm font-medium">Criar novo template personalizado</span>
+                            <span className="text-sm font-medium">{t('createNew')}</span>
                         </button>
                     )}
                 </div>
