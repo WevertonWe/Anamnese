@@ -15,6 +15,8 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
     const [showLogoText, setShowLogoText] = useState(true);
     const [role, setRole] = useState('doctor');
     const [aiModel, setAiModel] = useState('gemini-1.5-flash');
+    const [language, setLanguage] = useState('pt');
+    const [signatureImage, setSignatureImage] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
     const [modalConfig, setModalConfig] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'error' | 'info' }>({
@@ -32,6 +34,8 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                     setShowLogoText(profile.showLogoText ?? true);
                     setRole(profile.role || 'doctor');
                     setAiModel(profile.aiModel || 'gemini-1.5-flash');
+                    setLanguage(profile.language || 'pt');
+                    setSignatureImage(profile.signatureImage || null);
                 }
             });
         }
@@ -39,7 +43,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
 
     const handleSave = async () => {
         setIsSaving(true);
-        const res = await saveDoctorProfile({ fullName, crm, specialty, signatureAlign, showLogoText, role, aiModel });
+        const res = await saveDoctorProfile({ fullName, crm, specialty, signatureAlign, showLogoText, role, aiModel, language, signatureImage: signatureImage || undefined });
         setIsSaving(false);
         if (res.success) {
             document.cookie = `NEXT_LOCALE=${language}; path=/; max-age=31536000`;
@@ -142,7 +146,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
 
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" checked={showLogoText} onChange={e => setShowLogoText(e.target.checked)} className="w-4 h-4 text-emerald-600 rounded cursor-pointer" />
-                                <span className="text-sm font-medium text-slate-700">Imprimir "Anamnese Inteligente PWA" no cabeçalho</span>
+                                <span className="text-sm font-medium text-slate-700">Imprimir &quot;Anamnese Inteligente PWA&quot; no cabeçalho</span>
                             </label>
 
                             <div>
