@@ -1,7 +1,5 @@
 import { defineConfig } from '@prisma/config';
-import { config } from 'dotenv';
 import * as path from 'path';
-config();
 
 export default defineConfig({
   datasource: {
