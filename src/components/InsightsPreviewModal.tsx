@@ -25,10 +25,7 @@ export default function InsightsPreviewModal({
     const [hipotese, setHipotese] = useState('');
     const [conduta, setConduta] = useState('');
     const [cidList, setCidList] = useState<string[]>([]);
-<<<<<<< HEAD
     const [examesSugeridos, setExamesSugeridos] = useState<string[]>([]);
-=======
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
     const [observacoes, setObservacoes] = useState(formData['observacoes_gerais'] || '');
 
     useEffect(() => {
@@ -42,8 +39,6 @@ export default function InsightsPreviewModal({
             } else {
                 setCidList([]);
             }
-<<<<<<< HEAD
-
             const existingExames = formData['exames_sugeridos'];
             if (existingExames) {
                 setExamesSugeridos(typeof existingExames === 'string' ? existingExames.split(', ').filter(Boolean) : []);
@@ -51,32 +46,23 @@ export default function InsightsPreviewModal({
                 setExamesSugeridos([]);
             }
 
-=======
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
             fetchInsights();
         }
     }, [isOpen]);
 
     const fetchInsights = async () => {
         setIsLoading(true);
-<<<<<<< HEAD
         const { getRecentPatientHistory } = await import('@/app/actions/history.actions');
         const patientHistory = await getRecentPatientHistory(patientName);
 
         const result = await getClinicalInsights({ formData, templateId, patientHistory: patientHistory || undefined });
-=======
-        const result = await getClinicalInsights({ formData, templateId });
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
         setIsLoading(false);
 
         if (result.success && result.data) {
             if (result.data.hipotese_diagnostica) setHipotese(result.data.hipotese_diagnostica);
             if (result.data.conduta_sugerida) setConduta(result.data.conduta_sugerida);
             if (result.data.cid_sugerido?.length) setCidList(result.data.cid_sugerido);
-<<<<<<< HEAD
             if (result.data.exames_sugeridos?.length) setExamesSugeridos(result.data.exames_sugeridos);
-=======
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
         }
     };
 
@@ -85,10 +71,6 @@ export default function InsightsPreviewModal({
         hipotese_diagnostica: hipotese,
         conduta_sugerida: conduta,
         cid_sugerido: cidList.join(', '),
-<<<<<<< HEAD
-        exames_sugeridos: examesSugeridos.join(', '),
-=======
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
         observacoes_gerais: observacoes,
     });
 
@@ -189,30 +171,18 @@ export default function InsightsPreviewModal({
                                         />
                                     </div>
 
-<<<<<<< HEAD
                                     {/* Exames Sugeridos */}
-                                    {examesSugeridos.length > 0 && (
-                                        <div>
-                                            <label className="text-xs font-bold text-orange-700 mb-1.5 block">{t('examsLabel') || 'Exames Sugeridos'}</label>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {examesSugeridos.map((exame, i) => (
-                                                    <button
-                                                        key={i}
-                                                        onClick={() => setExamesSugeridos(prev => prev.filter((_, idx) => idx !== i))}
-                                                        className="px-2.5 py-1 bg-white hover:bg-red-50 hover:line-through hover:text-red-700 hover:border-red-200 border border-orange-200 text-orange-700 text-xs font-bold rounded-md transition-all flex items-center gap-1.5 shadow-sm group"
-                                                        title="Remover exame"
-                                                    >
-                                                        {exame}
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 mt-1 italic text-right">Clique no exame para removê-lo se não for necessário.</p>
+                                    <div>
+                                        <label className="text-xs font-bold text-orange-700 mb-1.5 block">{t('suggestedExamsLabel')}</label>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {examesSugeridos.length > 0 ? examesSugeridos.map((exam, i) => (
+                                                <span key={i} className="px-2.5 py-1 bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold rounded-md">{exam}</span>
+                                            )) : (
+                                                <span className="text-xs text-slate-400 italic">{t('noSuggestedExams')}</span>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
 
-=======
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
                                     {/* Observações */}
                                     <div>
                                         <label className="text-xs font-bold text-emerald-700 mb-1 block">{t('obsLabel')}</label>

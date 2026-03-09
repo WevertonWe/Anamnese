@@ -12,11 +12,7 @@ interface AnamneseRecord {
 
 export function exportAnamneseToPDF(
   record: AnamneseRecord,
-<<<<<<< HEAD
   doctorProfile: { fullName: string, crm: string, specialty: string, signatureAlign?: string, showLogoText?: boolean, signatureImage?: string | null } | null = null,
-=======
-  doctorProfile: { fullName: string, crm: string, specialty: string, signatureAlign?: string, showLogoText?: boolean } | null = null,
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
   mode: 'compact' | 'full' = 'compact',
   locale: string = 'pt',
   translations: Record<string, string> = {}
@@ -89,15 +85,10 @@ export function exportAnamneseToPDF(
   const fieldLabels: Record<string, string> = {
     'observacoes_gerais': translations['observacoes_gerais'] || (isEn ? 'General Notes' : isEs ? 'Notas Generales' : 'Observações Gerais'),
     'cid_sugerido': translations['cid_sugerido'] || (isEn ? 'Suggested ICD-10' : isEs ? 'Diagnóstico Sugerido (CIE-10)' : 'Sugestão de CID-10'),
-<<<<<<< HEAD
     'cid': translations['cid_sugerido'] || (isEn ? 'Suggested ICD-10' : isEs ? 'Diagnóstico Sugerido (CIE-10)' : 'Sugestão de CID-10'),
     'hipotese_diagnostica': translations['hipotese_diagnostica'] || (isEn ? 'Diagnostic Hypothesis' : isEs ? 'Hipótesis Diagnóstica' : 'Hipótese Diagnóstica'),
     'conduta_sugerida': translations['conduta_sugerida'] || (isEn ? 'Suggested Conduct' : isEs ? 'Conducta Sugerida' : 'Conduta Sugerida'),
     'conduta': translations['conduta_sugerida'] || (isEn ? 'Suggested Conduct' : isEs ? 'Conducta Sugerida' : 'Conduta Sugerida')
-=======
-    'hipotese_diagnostica': translations['hipotese_diagnostica'] || (isEn ? 'Diagnostic Hypothesis' : isEs ? 'Hipótesis Diagnóstica' : 'Hipótese Diagnóstica'),
-    'conduta_sugerida': translations['conduta_sugerida'] || (isEn ? 'Suggested Conduct' : isEs ? 'Conducta Sugerida' : 'Conduta Sugerida')
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
   };
 
   if (record.template && typeof record.template.schema === 'string') {
