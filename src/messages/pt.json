@@ -46,6 +46,8 @@
     "obsLabel": "Observações Gerais",
     "obsPlaceholder": "Adicione notas, prescrições informais ou lembretes...",
     "examsLabel": "Exames Sugeridos pela IA",
+    "suggestedExamsLabel": "Exames Complementares Sugeridos",
+    "noSuggestedExams": "Nenhum exame específico sugerido",
     "cancel": "Voltar",
     "email": "E-mail",
     "pdfCompact": "PDF Resumo",

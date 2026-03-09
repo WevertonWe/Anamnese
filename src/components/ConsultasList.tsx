@@ -41,17 +41,6 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
         return () => clearInterval(interval);
     }, [refreshTrigger]);
 
-<<<<<<< HEAD
-    const handleDeleteRecord = async (id: string) => {
-        setLoading(true);
-        const res = await deleteRecord(id);
-        if (res.success) {
-            setRecords(records.filter(r => r.id !== id));
-        } else {
-            console.error(res.error);
-        }
-        setLoading(false);
-=======
     const confirmDelete = (id: string) => {
         setModalConfig({
             isOpen: true,
@@ -69,7 +58,6 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
                 }
             }
         });
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
     };
 
     const viewDetails = (record: any) => {
@@ -170,11 +158,7 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
                         <button onClick={() => viewDetails(record)} className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition text-center">
                             {t('details')}
                         </button>
-<<<<<<< HEAD
-                        <button onClick={() => handleDeleteRecord(record.id)} className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition text-center">
-=======
                         <button onClick={() => confirmDelete(record.id)} className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition text-center">
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
                             {t('delete')}
                         </button>
                     </div>

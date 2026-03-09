@@ -39,14 +39,10 @@ export default function HeaderSettings() {
         return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
     };
 
-    const setLanguage = (locale: string) => {
-        document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000`;
-        router.refresh();
-    };
+
 
     return (
         <div className="absolute top-4 right-4 sm:top-8 sm:right-8 flex items-center gap-3 z-30">
-<<<<<<< HEAD
             <div key={locale} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 p-1 rounded-full shadow-sm">
                 <button
                     onClick={() => setLanguage('pt')}
@@ -71,40 +67,8 @@ export default function HeaderSettings() {
             <button
                 onClick={() => setIsSettingsOpen(true)}
                 className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shadow-md border-[3px] border-slate-100 hover:border-slate-300 hover:ring-2 hover:ring-emerald-400 hover:scale-105 transition-all duration-300 overflow-hidden ml-1"
-                title={profile?.fullName || cachedName || t('settingsLabel')}
-=======
-            <div className="flex items-center gap-1 bg-white border border-slate-200 p-1 rounded-full shadow-sm">
-                <button
-                    onClick={() => setLanguage('pt')}
-                    className={`text-2xl w-10 h-10 flex flex-col justify-center items-center rounded-full transition-all duration-300 ${locale === 'pt' ? 'ring-2 ring-emerald-500 bg-emerald-50 scale-110 shadow-md' : 'hover:bg-slate-100 opacity-70 hover:opacity-100'}`}
-                    title="Português">
-                    🇧🇷
-                </button>
-                <button
-                    onClick={() => setLanguage('en')}
-                    className={`text-2xl w-10 h-10 flex flex-col justify-center items-center rounded-full transition-all duration-300 ${locale === 'en' ? 'ring-2 ring-emerald-500 bg-emerald-50 scale-110 shadow-md' : 'hover:bg-slate-100 opacity-70 hover:opacity-100'}`}
-                    title="English">
-                    🇺🇸
-                </button>
-                <button
-                    onClick={() => setLanguage('es')}
-                    className={`text-2xl w-10 h-10 flex flex-col justify-center items-center rounded-full transition-all duration-300 ${locale === 'es' ? 'ring-2 ring-emerald-500 bg-emerald-50 scale-110 shadow-md' : 'hover:bg-slate-100 opacity-70 hover:opacity-100'}`}
-                    title="Español">
-                    🇪🇸
-                </button>
-            </div>
-            <button
-                onClick={() => logoutUser()}
-                className="hidden sm:block px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 bg-white rounded-full shadow-sm border border-slate-200 hover:bg-red-50 hover:border-red-200 transition"
-            >
-                {t('switchProfile')}
-            </button>
-            <button
-                onClick={() => setIsSettingsOpen(true)}
-                className="p-2.5 text-slate-500 hover:text-emerald-700 bg-white rounded-full shadow-sm border border-slate-200 hover:bg-emerald-50 transition"
                 aria-label={t('settingsLabel')}
-                title={t('settingsLabel')}
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
+                title={profile?.fullName || cachedName || t('settingsLabel')}
             >
                 {profile?.avatarUrl ? (
                     <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />

@@ -6,10 +6,7 @@ import prisma from '@/lib/prisma';
 interface InsightsRequest {
     formData: Record<string, string>;
     templateId: string;
-<<<<<<< HEAD
     patientHistory?: string;
-=======
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
 }
 
 export async function getClinicalInsights(data: InsightsRequest) {
@@ -34,28 +31,17 @@ export async function getClinicalInsights(data: InsightsRequest) {
 
         const systemInstruction = `
 Você é um Assistente Médico Especialista em Diagnóstico Clínico.
-<<<<<<< HEAD
 Dada uma anamnese estruturada de um paciente (template: ${templateName}) e seu histórico recente (se disponível), sua função é:
 1. Sugerir códigos CID-10 aplicáveis baseados nos sintomas relatados.
 2. Formular uma Hipótese Diagnóstica concisa e fundamentada (indicando melhora ou piora clínica baseada no histórico).
 3. Sugerir uma Conduta clínica (exames em consultório, prescrições, encaminhamentos).
 4. Sugerir Exames Complementares pertinentes.
-=======
-Dada uma anamnese estruturada de um paciente (template: ${templateName}), sua função é:
-1. Sugerir códigos CID-10 aplicáveis baseados nos sintomas relatados.
-2. Formular uma Hipótese Diagnóstica concisa e fundamentada.
-3. Sugerir uma Conduta clínica (exames, prescrições, encaminhamentos).
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
 
 Baseie-se SOMENTE nos dados fornecidos. Se não houver informação suficiente, indique "Dados insuficientes para determinar".
 `;
 
-<<<<<<< HEAD
         const historyContext = data.patientHistory ? `\n\n[Histórico Recente do Paciente]\n${data.patientHistory}` : '';
         const prompt = `Analise a seguinte anamnese e gere os insights clínicos:\n\n[Anamnese Atual]\n${clinicalSummary}${historyContext}`;
-=======
-        const prompt = `Analise a seguinte anamnese e gere os insights clínicos:\n\n${clinicalSummary}`;
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
 
         let responseText = "";
         let attemptSuccess = false;
@@ -72,16 +58,10 @@ Baseie-se SOMENTE nos dados fornecidos. Se não houver informação suficiente, 
                             properties: {
                                 cid_sugerido: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Códigos CID-10 sugeridos" },
                                 hipotese_diagnostica: { type: SchemaType.STRING, description: "Hipótese diagnóstica baseada nos sintomas" },
-<<<<<<< HEAD
                                 conduta_sugerida: { type: SchemaType.STRING, description: "Conduta clínica sugerida" },
                                 exames_sugeridos: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Exames complementares sugeridos" }
                             },
                             required: ["cid_sugerido", "hipotese_diagnostica", "conduta_sugerida", "exames_sugeridos"]
-=======
-                                conduta_sugerida: { type: SchemaType.STRING, description: "Conduta clínica sugerida" }
-                            },
-                            required: ["cid_sugerido", "hipotese_diagnostica", "conduta_sugerida"]
->>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
                         }
                     }
                 });

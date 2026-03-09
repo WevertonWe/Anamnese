@@ -46,6 +46,8 @@
     "obsLabel": "General Observations",
     "obsPlaceholder": "Add notes, informal prescriptions, or reminders...",
     "examsLabel": "AI Suggested Exams",
+    "suggestedExamsLabel": "Suggested Exams",
+    "noSuggestedExams": "No specific exams suggested",
     "cancel": "Back",
     "email": "Email",
     "pdfCompact": "PDF Summary",
