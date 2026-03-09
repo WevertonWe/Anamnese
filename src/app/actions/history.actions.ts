@@ -40,7 +40,10 @@ export async function saveRecord(data: { patientName: string; templateId: string
             data: {
                 patientName: data.patientName || "Paciente Não Identificado",
                 templateId: data.templateId,
+<<<<<<< HEAD
                 doctorId: doctorId || undefined,
+=======
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
                 date: data.date ? new Date(data.date) : new Date(),
                 data: JSON.stringify(data.data)
             },

@@ -27,6 +27,7 @@ export default function ClinicalDashboard({ refreshTrigger = 0 }: { refreshTrigg
 
             // Template Mais Usado
             const templatesCount: Record<string, number> = {};
+<<<<<<< HEAD
             let hasValidTemplate = false;
             records.forEach(r => {
                 if (r.template?.name) {
@@ -43,6 +44,19 @@ export default function ClinicalDashboard({ refreshTrigger = 0 }: { refreshTrigg
                         maxCount = count;
                         topTemplate = name;
                     }
+=======
+            records.forEach(r => {
+                const tName = r.template?.name || t('none');
+                templatesCount[tName] = (templatesCount[tName] || 0) + 1;
+            });
+
+            let topTemplate = t('none');
+            let maxCount = 0;
+            for (const [name, count] of Object.entries(templatesCount)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    topTemplate = name;
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
                 }
             }
 

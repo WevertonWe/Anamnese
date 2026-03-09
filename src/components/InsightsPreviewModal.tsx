@@ -25,7 +25,10 @@ export default function InsightsPreviewModal({
     const [hipotese, setHipotese] = useState('');
     const [conduta, setConduta] = useState('');
     const [cidList, setCidList] = useState<string[]>([]);
+<<<<<<< HEAD
     const [examesSugeridos, setExamesSugeridos] = useState<string[]>([]);
+=======
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
     const [observacoes, setObservacoes] = useState(formData['observacoes_gerais'] || '');
 
     useEffect(() => {
@@ -39,6 +42,7 @@ export default function InsightsPreviewModal({
             } else {
                 setCidList([]);
             }
+<<<<<<< HEAD
 
             const existingExames = formData['exames_sugeridos'];
             if (existingExames) {
@@ -47,23 +51,32 @@ export default function InsightsPreviewModal({
                 setExamesSugeridos([]);
             }
 
+=======
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
             fetchInsights();
         }
     }, [isOpen]);
 
     const fetchInsights = async () => {
         setIsLoading(true);
+<<<<<<< HEAD
         const { getRecentPatientHistory } = await import('@/app/actions/history.actions');
         const patientHistory = await getRecentPatientHistory(patientName);
 
         const result = await getClinicalInsights({ formData, templateId, patientHistory: patientHistory || undefined });
+=======
+        const result = await getClinicalInsights({ formData, templateId });
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
         setIsLoading(false);
 
         if (result.success && result.data) {
             if (result.data.hipotese_diagnostica) setHipotese(result.data.hipotese_diagnostica);
             if (result.data.conduta_sugerida) setConduta(result.data.conduta_sugerida);
             if (result.data.cid_sugerido?.length) setCidList(result.data.cid_sugerido);
+<<<<<<< HEAD
             if (result.data.exames_sugeridos?.length) setExamesSugeridos(result.data.exames_sugeridos);
+=======
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
         }
     };
 
@@ -72,7 +85,10 @@ export default function InsightsPreviewModal({
         hipotese_diagnostica: hipotese,
         conduta_sugerida: conduta,
         cid_sugerido: cidList.join(', '),
+<<<<<<< HEAD
         exames_sugeridos: examesSugeridos.join(', '),
+=======
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
         observacoes_gerais: observacoes,
     });
 
@@ -173,6 +189,7 @@ export default function InsightsPreviewModal({
                                         />
                                     </div>
 
+<<<<<<< HEAD
                                     {/* Exames Sugeridos */}
                                     {examesSugeridos.length > 0 && (
                                         <div>
@@ -194,6 +211,8 @@ export default function InsightsPreviewModal({
                                         </div>
                                     )}
 
+=======
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
                                     {/* Observações */}
                                     <div>
                                         <label className="text-xs font-bold text-emerald-700 mb-1 block">{t('obsLabel')}</label>

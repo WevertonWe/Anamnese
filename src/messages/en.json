@@ -45,7 +45,10 @@
         "conductPlaceholder": "AI will suggest exams or treatments...",
         "obsLabel": "General Observations",
         "obsPlaceholder": "Add notes, informal prescriptions, or reminders...",
+<<<<<<< HEAD
         "examsLabel": "AI Suggested Exams",
+=======
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
         "cancel": "Back",
         "email": "Email",
         "pdfCompact": "PDF Summary",

@@ -45,7 +45,10 @@
         "conductPlaceholder": "A IA sugerirá exames ou tratamentos...",
         "obsLabel": "Observações Gerais",
         "obsPlaceholder": "Adicione notas, prescrições informais ou lembretes...",
+<<<<<<< HEAD
         "examsLabel": "Exames Sugeridos pela IA",
+=======
+>>>>>>> a20460f2f415855354f0003124980c0dcf8bfced
         "cancel": "Voltar",
         "email": "E-mail",
         "pdfCompact": "PDF Resumo",
