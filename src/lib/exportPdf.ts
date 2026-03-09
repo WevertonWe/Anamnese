@@ -5,14 +5,17 @@ interface AnamneseRecord {
   id: string;
   patientName: string;
   createdAt: string | Date;
-  template?: { name: string };
+  date?: string | Date;
+  template?: { name: string; schema?: any };
   data: Record<string, any>;
 }
 
 export function exportAnamneseToPDF(
   record: AnamneseRecord,
-  doctorProfile: { fullName: string, crm: string, specialty: string, signatureAlign?: string, showLogoText?: boolean } | null = null,
-  mode: 'compact' | 'full' = 'compact'
+  doctorProfile: { fullName: string, crm: string, specialty: string, signatureAlign?: string, showLogoText?: boolean, signatureImage?: string | null } | null = null,
+  mode: 'compact' | 'full' = 'compact',
+  locale: string = 'pt',
+  translations: Record<string, string> = {}
 ) {
   // Cria o documento em formato A4, retrato (portrait), com medidas em mm
   const doc = new jsPDF({
@@ -25,18 +28,23 @@ export function exportAnamneseToPDF(
   const pageHeight = doc.internal.pageSize.getHeight();
   const marginX = 14;
 
+  const isEn = locale === 'en';
+  const isEs = locale === 'es';
+
   // Opcional: Texto "Anamnese Inteligente PWA"
   if (doctorProfile?.showLogoText !== false) {
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text('Anamnese Inteligente PWA', pageWidth - marginX, 10, { align: 'right' });
+    const appName = isEn ? 'Intelligent Anamnesis PWA' : isEs ? 'Anamnesis Inteligente PWA' : 'Anamnese Inteligente PWA';
+    doc.text(appName, pageWidth - marginX, 10, { align: 'right' });
     doc.setTextColor(0); // Volta pro preto
   }
 
   // 1. Cabeçalho / Título do Documento
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  const titleStr = record.template?.name ? `RELATÓRIO CLÍNICO - ${record.template.name.toUpperCase()}` : 'RELATÓRIO CLÍNICO DE ANAMNESE';
+  const titlePrefix = isEn ? 'CLINICAL REPORT' : isEs ? 'INFORME CLÍNICO' : 'RELATÓRIO CLÍNICO';
+  const titleStr = record.template?.name ? `${titlePrefix} - ${record.template.name.toUpperCase()}` : titlePrefix;
   doc.text(titleStr, pageWidth / 2, 20, { align: 'center' });
 
   // 1b. Metadados do Médico (Se existir)
@@ -59,45 +67,87 @@ export function exportAnamneseToPDF(
   const currentY = doctorProfile && doctorProfile.fullName ? 40 : 35;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Paciente: ${record.patientName}`, marginX, currentY);
-  doc.text(`Data da Consulta: ${new Date(record.createdAt).toLocaleDateString('pt-BR')}`, marginX, currentY + 7);
-  doc.text(`Template Utilizado: ${record.template?.name || "Padrão"}`, marginX, currentY + 14);
+  doc.text(`${isEn ? 'Patient' : isEs ? 'Paciente' : 'Paciente'}: ${record.patientName}`, marginX, currentY);
+  const dataHistorica = record.date ? record.date : record.createdAt;
+  const dateLocaleStr = isEn ? 'en-US' : isEs ? 'es-ES' : 'pt-BR';
+  doc.text(`${isEn ? 'Date' : isEs ? 'Fecha' : 'Data'}: ${new Date(dataHistorica).toLocaleDateString(dateLocaleStr)}`, marginX, currentY + 7);
+  doc.text(`Template: ${record.template?.name || (isEn ? "Standard" : isEs ? "Padrão" : "Padrão")}`, marginX, currentY + 14);
 
   // Linha Separadora
   doc.setLineWidth(0.5);
   doc.line(marginX, currentY + 18, pageWidth - marginX, currentY + 18);
 
-  // 3. Montagem da Tabela com os Dados (Extraídos pelo Gemini)
-  // Converte a chave (que é kebab-case ou camelCase) para Capitalizada para fins de apresentação
+  // Montagem da Tabela com os Dados
   const formatKey = (key: string) => {
     return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const tableBody = Object.entries(record.data).map(([key, value]) => {
-    // Se o valor for array (ex: cid_sugerido), join com quebra ou vírgula.
-    const displayValue = Array.isArray(value) ? value.join(', ') : value;
-    return [formatKey(key), displayValue];
-  });
+  const fieldLabels: Record<string, string> = {
+    'observacoes_gerais': translations['observacoes_gerais'] || (isEn ? 'General Notes' : isEs ? 'Notas Generales' : 'Observações Gerais'),
+    'cid_sugerido': translations['cid_sugerido'] || (isEn ? 'Suggested ICD-10' : isEs ? 'Diagnóstico Sugerido (CIE-10)' : 'Sugestão de CID-10'),
+    'cid': translations['cid_sugerido'] || (isEn ? 'Suggested ICD-10' : isEs ? 'Diagnóstico Sugerido (CIE-10)' : 'Sugestão de CID-10'),
+    'hipotese_diagnostica': translations['hipotese_diagnostica'] || (isEn ? 'Diagnostic Hypothesis' : isEs ? 'Hipótesis Diagnóstica' : 'Hipótese Diagnóstica'),
+    'conduta_sugerida': translations['conduta_sugerida'] || (isEn ? 'Suggested Conduct' : isEs ? 'Conducta Sugerida' : 'Conduta Sugerida'),
+    'conduta': translations['conduta_sugerida'] || (isEn ? 'Suggested Conduct' : isEs ? 'Conducta Sugerida' : 'Conduta Sugerida')
+  };
+
+  if (record.template && typeof record.template.schema === 'string') {
+    try {
+      const parsed = JSON.parse(record.template.schema);
+      if (parsed.fields) {
+        parsed.fields.forEach((f: any) => {
+          if (f.id) fieldLabels[f.id] = translations[f.id] || f.label || formatKey(f.id);
+        });
+      }
+    } catch (e) { }
+  } else if (record.template && typeof record.template.schema === 'object') {
+    const schemaObj: any = record.template.schema;
+    if (schemaObj.fields) {
+      schemaObj.fields.forEach((f: any) => {
+        if (f.id) fieldLabels[f.id] = translations[f.id] || f.label || formatKey(f.id);
+      });
+    }
+  }
+
+  const hiddenFields = ['patient_name_extracted', 'consult_date_extracted'];
+
+  const tableBody = Object.entries(record.data)
+    .filter(([key]) => !hiddenFields.includes(key))
+    .map(([key, value]) => {
+      // Tentar traduzir as opções se for multiple choice armazenado como CSV
+      let displayValue = String(value);
+      if (typeof value === 'string' && value.includes(',') && translations[`${key}-options`]) {
+        const parts = value.split(',').map(s => s.trim());
+        const trParts = translations[`${key}-options`].split(',').map(s => s.trim());
+        // Como não temos mapeamento exato 1:1 chave-valor nas opções, vamos fazer um replace se existir
+        // Mas sem arriscar muito, vamos deixar o valor original
+      }
+      const finalLabel = fieldLabels[key] || formatKey(key);
+      return [finalLabel, displayValue];
+    });
 
   const bodyStylesConfig = mode === 'full' ? {
     font: 'helvetica',
-    textColor: [51, 65, 85], // text-slate-700
+    textColor: [51, 65, 85],
     fontSize: 10,
-    cellPadding: 8, // Maior no Full
+    cellPadding: 8,
   } : {
     font: 'helvetica',
-    textColor: [51, 65, 85], // text-slate-700
+    textColor: [51, 65, 85],
     fontSize: 10,
-    cellPadding: 4, // Compacto no Compact
+    cellPadding: 4,
   };
+
+  const headLabel1 = isEn ? 'Clinical Field' : isEs ? 'Campo Clínico' : 'Campo Clínico';
+  const headLabel2 = isEn ? 'Description / Report' : isEs ? 'Descripción / Relato' : 'Descrição / Relato';
 
   autoTable(doc, {
     startY: currentY + 23,
-    head: [['Campo Clínico', 'Descrição / Relato']],
+    head: [[headLabel1, headLabel2]],
     body: tableBody,
-    theme: mode === 'full' ? 'striped' : 'grid', // No full temos linhas zebradas sem borda pesada
+    theme: mode === 'full' ? 'striped' : 'grid',
     headStyles: {
-      fillColor: [30, 41, 59], // bg-slate-800
+      fillColor: [30, 41, 59],
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       font: 'helvetica'
@@ -108,7 +158,6 @@ export function exportAnamneseToPDF(
       1: { cellWidth: 'auto' }
     },
     margin: { left: marginX, right: marginX },
-    // Quebra palavras muito longas
     styles: { overflow: 'linebreak' }
   });
 
@@ -129,12 +178,12 @@ export function exportAnamneseToPDF(
   // 4b. Assinatura no final da última página
   const finalY = (doc as any).lastAutoTable.finalY || 100;
   // Se o final da tabela estiver muito perto do fim da página, adicione uma nova
-  if (finalY > pageHeight - 50) {
+  if (finalY > pageHeight - 65) {
     doc.addPage();
   }
 
   if (doctorProfile && doctorProfile.fullName) {
-    const sigY = finalY > pageHeight - 50 ? 40 : finalY + 40;
+    const sigY = finalY > pageHeight - 65 ? 50 : finalY + 50;
     doc.setLineWidth(0.5);
 
     const align = doctorProfile.signatureAlign || 'center';
@@ -150,6 +199,23 @@ export function exportAnamneseToPDF(
       textX = pageWidth - marginX - (sigWidth / 2);
     }
 
+    if (doctorProfile.signatureImage) {
+      try {
+        const base64Parts = doctorProfile.signatureImage.split(';');
+        if (base64Parts.length > 0 && base64Parts[0].startsWith('data:image/')) {
+          let format = base64Parts[0].split('/')[1].toUpperCase();
+          if (format === 'JPG') format = 'JPEG';
+          const imgW = 40;
+          const imgH = 15;
+          const imgX = startX + (sigWidth / 2) - (imgW / 2);
+          const imgY = sigY - imgH - 1;
+          doc.addImage(doctorProfile.signatureImage, format, imgX, imgY, imgW, imgH);
+        }
+      } catch (e) {
+        console.error("Erro ao adicionar assinatura na exportação", e);
+      }
+    }
+
     doc.line(startX, sigY, startX + sigWidth, sigY);
 
     doc.setFontSize(10);
@@ -157,6 +223,15 @@ export function exportAnamneseToPDF(
     if (doctorProfile.crm) {
       doc.text(`CRM: ${doctorProfile.crm}`, textX, sigY + 10, { align: 'center' });
     }
+
+    // Selo de Autenticidade
+    doc.setFontSize(6);
+    doc.setTextColor(120);
+    const dateStr = new Date().toLocaleString(isEn ? 'en-US' : isEs ? 'es-ES' : 'pt-BR');
+    const sealPrefix = isEn ? 'Digitally Signed on' : isEs ? 'Firmado Digitalmente el' : 'Assinado Digitalmente em';
+    const sealBy = isEn ? 'by' : isEs ? 'por' : 'por';
+    doc.text(`${sealPrefix} ${dateStr} ${sealBy} ${doctorProfile.fullName}`, textX, sigY + 14, { align: 'center' });
+    doc.setTextColor(0);
   }
 
   // 5. Download do PDF

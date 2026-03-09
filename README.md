@@ -1,5 +1,16 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 🚀 Guia de Instalação Rápida (Quick Start)
+
+Para configurar e rodar este projeto em um novo computador:
+
+1. **Pré-requisito**: Certifique-se de ter o **[Node.js](https://nodejs.org/)** instalado.
+2. **Variáveis de Ambiente**:
+   - Copie o arquivo `.env.example` e renomeie-o para `.env`.
+   - Preencha o `.env` com suas próprias credenciais (URL do banco de dados e chaves de IA).
+3. **Instalação Automática**:
+   - No Windows, dê dois cliques ou execute no terminal o script `setup-project.bat`. Ele se encarregará de baixar as dependências (`npm install`), preparar o banco de dados (`prisma db push`) e semeá-lo (`prisma db seed`).
+
 ## Getting Started
 
 First, run the development server:

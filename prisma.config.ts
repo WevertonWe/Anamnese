@@ -5,7 +5,7 @@ config();
 
 export default defineConfig({
   datasource: {
-    url: "file:" + path.join(process.cwd(), "prisma", "dev.db")
+    url: process.env.DATABASE_URL || ("file:" + path.join(process.cwd(), "prisma", "dev.db"))
   },
   migrations: {
     seed: 'npx tsx prisma/seed.ts'

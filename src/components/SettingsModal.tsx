@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react';
 import { getDoctorProfile, saveDoctorProfile } from '@/app/actions/profile.actions';
 import Modal from '@/components/ui/Modal';
+import { useTranslations } from 'next-intl';
 
 export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+    const t = useTranslations('Settings');
+
     const [fullName, setFullName] = useState('');
     const [crm, setCrm] = useState('');
     const [specialty, setSpecialty] = useState('');
@@ -12,6 +15,9 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
     const [showLogoText, setShowLogoText] = useState(true);
     const [role, setRole] = useState('doctor');
     const [aiModel, setAiModel] = useState('gemini-1.5-flash');
+    const [language, setLanguage] = useState('pt');
+    const [avatarUrl, setAvatarUrl] = useState('');
+    const [signatureImage, setSignatureImage] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     const [modalConfig, setModalConfig] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'error' | 'info' }>({
@@ -19,33 +25,49 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
     });
 
     useEffect(() => {
-        if (isOpen) {
-            getDoctorProfile().then(profile => {
-                if (profile) {
-                    setFullName(profile.fullName || '');
-                    setCrm(profile.crm || '');
-                    setSpecialty(profile.specialty || '');
-                    setSignatureAlign(profile.signatureAlign || 'center');
-                    setShowLogoText(profile.showLogoText ?? true);
-                    setRole(profile.role || 'doctor');
-                    setAiModel(profile.aiModel || 'gemini-1.5-flash');
-                }
-            });
-        }
+        getDoctorProfile().then(p => {
+            const profile = p as any;
+            if (profile) {
+                setFullName(profile.fullName || '');
+                setCrm(profile.crm || '');
+                setSpecialty(profile.specialty || '');
+                setSignatureAlign(profile.signatureAlign || 'center');
+                setShowLogoText(profile.showLogoText ?? true);
+                setRole(profile.role || 'doctor');
+                setAiModel(profile.aiModel || 'gemini-1.5-flash');
+                setLanguage(profile.language || 'pt');
+                setAvatarUrl(profile.avatarUrl || '');
+                setSignatureImage(profile.signatureImage || '');
+            }
+        });
     }, [isOpen]);
 
     const handleSave = async () => {
         setIsSaving(true);
-        const res = await saveDoctorProfile({ fullName, crm, specialty, signatureAlign, showLogoText, role, aiModel });
+        // Cast the profile to any or include language to bypass type issues temporarily if the Prisma schema is delayed in the type generator
+        const profileData = { fullName, crm, specialty, signatureAlign, showLogoText, role, aiModel, language, avatarUrl, signatureImage } as any;
+        const res = await saveDoctorProfile(profileData);
         setIsSaving(false);
         if (res.success) {
             setModalConfig({ isOpen: true, title: 'Sucesso', message: 'Configurações do profissional salvas.', type: 'success' });
+
+            // Wait a brief moment to let user read the success message, then close modal and refresh
             setTimeout(() => {
                 setModalConfig(m => ({ ...m, isOpen: false }));
                 onClose();
+                window.location.reload(); // Full reload to guarantee translations apply smoothly across client components and server actions
             }, 1000);
         } else {
             setModalConfig({ isOpen: true, title: 'Erro', message: res.error || 'Erro ao salvar', type: 'error' });
+        }
+    };
+
+    const handleFileToBase64 = (e: React.ChangeEvent<HTMLInputElement>, setter: (value: string) => void) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setter(reader.result as string);
+            reader.readAsDataURL(file);
         }
     };
 
@@ -56,53 +78,74 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
 
     return (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col md:flex-row max-h-[90vh]">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col md:flex-row max-h-[80vh] overflow-y-auto">
 
                 {/* Lado Esquerdo: Formulário */}
-                <div className="flex-1 overflow-y-auto w-full">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 sticky top-0 z-10">
+                <div className="flex-1 flex flex-col w-full h-full overflow-hidden">
+                    {/* Header Esq */}
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 flex-shrink-0">
                         <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                            Perfil e Preferências
+                            {t('title')}
                         </h2>
                         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition md:hidden">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
 
-                    <div className="p-6 space-y-6">
+                    {/* Body Esq */}
+                    <div className="p-6 space-y-6 overflow-y-auto flex-1">
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Identidade</h3>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Perfil de Uso</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">{t('roleLabel')}</label>
                                 <div className="flex bg-slate-100 p-1 rounded-lg">
                                     <button
                                         onClick={() => setRole('doctor')}
                                         className={`flex-1 text-sm py-1.5 rounded-md font-medium transition ${role === 'doctor' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
-                                        Médico Profissional
+                                        {t('doctorRole')}
                                     </button>
                                     <button
                                         onClick={() => setRole('patient')}
                                         className={`flex-1 text-sm py-1.5 rounded-md font-medium transition ${role === 'patient' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
-                                        Paciente / Pessoal
+                                        {t('patientRole')}
                                     </button>
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Nome Completo</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Foto de Perfil</label>
+                                <div className="flex items-center gap-4">
+                                    {avatarUrl && <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover border border-slate-200" />}
+                                    <input type="file" accept="image/*" onChange={e => handleFileToBase64(e, setAvatarUrl)} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer flex-1" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">{t('fullName')}</label>
                                 <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: Dr. João Silva" />
                             </div>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Registro Médico</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">{t('crm')}</label>
                                     <input type="text" value={crm} onChange={e => setCrm(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: CRM-SP 123456" />
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Especialidade</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">{t('specialty')}</label>
                                     <input type="text" value={specialty} onChange={e => setSpecialty(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: Cardiologia" />
                                 </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">{t('language')}</label>
+                                <select
+                                    value={language}
+                                    onChange={e => setLanguage(e.target.value)}
+                                    className="w-full border border-slate-300 rounded-lg p-2 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                >
+                                    <option value="pt">Português (Brasil)</option>
+                                    <option value="en">Inglês / English</option>
+                                    <option value="es">Espanhol / Español</option>
+                                </select>
                             </div>
                         </div>
 
@@ -115,6 +158,14 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                                 <input type="checkbox" checked={showLogoText} onChange={e => setShowLogoText(e.target.checked)} className="w-4 h-4 text-emerald-600 rounded cursor-pointer" />
                                 <span className="text-sm font-medium text-slate-700">Imprimir "Anamnese Inteligente PWA" no cabeçalho</span>
                             </label>
+
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Assinatura Digital</label>
+                                <div className="flex flex-col gap-2">
+                                    {signatureImage && <img src={signatureImage} alt="Assinatura" className="h-16 object-contain border border-slate-200 rounded-lg p-1 bg-white self-start" />}
+                                    <input type="file" accept="image/*" onChange={e => handleFileToBase64(e, setSignatureImage)} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer w-full" />
+                                </div>
+                            </div>
 
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Alinhamento da Assinatura</label>
@@ -131,12 +182,112 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                                 </div>
                             </div>
                         </div>
+                        <hr className="border-slate-100" />
+
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">{t('exportData')}</h3>
+
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={async () => {
+                                        const { getHistory } = await import('@/app/actions/history.actions');
+                                        const records = await getHistory();
+                                        if (records.length === 0) {
+                                            alert("Nenhum histórico para exportar.");
+                                            return;
+                                        }
+
+                                        // Header com BOM (UTF-8) para o Excel ler acentos
+                                        let csv = "\uFEFFID,Paciente,Data_Consulta,Template_Nome,Data_Criacao\n";
+                                        records.forEach((r: any) => {
+                                            const pName = r.patientName ? `"${r.patientName.replace(/"/g, '""')}"` : "Desconhecido";
+                                            const cDate = r.date ? new Date(r.date).toLocaleDateString('pt-BR') : "";
+                                            const tName = r.template?.name || "Padrão";
+                                            const crDate = new Date(r.createdAt).toLocaleString('pt-BR');
+                                            csv += `${r.id},${pName},${cDate},${tName},${crDate}\n`;
+                                        });
+
+                                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                                        const link = document.createElement("a");
+                                        const url = URL.createObjectURL(blob);
+                                        link.setAttribute("href", url);
+                                        link.setAttribute("download", `historico_anamnese_${new Date().toISOString().split('T')[0]}.csv`);
+                                        link.style.visibility = 'hidden';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                    }}
+                                    className="flex-1 flex items-center justify-center gap-2 p-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition shadow-sm text-sm"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    {t('exportCsv')}
+                                </button>
+
+                                <a
+                                    href="/api/backup"
+                                    download
+                                    className="flex-1 flex items-center justify-center gap-2 p-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition shadow-sm text-sm"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                                    {t('backupDb')}
+                                </a>
+                            </div>
+
+                            <button
+                                onClick={async () => {
+                                    const { getHistory } = await import('@/app/actions/history.actions');
+                                    const records = await getHistory();
+                                    if (records.length === 0) {
+                                        alert("Nenhum histórico para exportar.");
+                                        return;
+                                    }
+
+                                    const currentDate = new Date();
+                                    const currentMonth = currentDate.getMonth();
+                                    const currentYear = currentDate.getFullYear();
+
+                                    const monthRecords = records.filter((r: any) => {
+                                        const rDate = new Date(r.date || r.createdAt);
+                                        return rDate.getMonth() === currentMonth && rDate.getFullYear() === currentYear;
+                                    });
+
+                                    if (monthRecords.length === 0) {
+                                        alert("Nenhum histórico neste mês para exportar.");
+                                        return;
+                                    }
+
+                                    let csv = "\uFEFFID,Paciente,Data_Consulta,Template_Nome,Data_Criacao\n";
+                                    monthRecords.forEach((r: any) => {
+                                        const pName = r.patientName ? `"${r.patientName.replace(/"/g, '""')}"` : "Desconhecido";
+                                        const cDate = r.date ? new Date(r.date).toLocaleDateString('pt-BR') : "";
+                                        const tName = r.template?.name || "Padrão";
+                                        const crDate = new Date(r.createdAt).toLocaleString('pt-BR');
+                                        csv += `${r.id},${pName},${cDate},${tName},${crDate}\n`;
+                                    });
+
+                                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                                    const link = document.createElement("a");
+                                    const url = URL.createObjectURL(blob);
+                                    link.setAttribute("href", url);
+                                    link.setAttribute("download", `resumo_mes_${currentMonth + 1}_${currentYear}.csv`);
+                                    link.style.visibility = 'hidden';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                }}
+                                className="w-full flex items-center justify-center gap-2 p-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition shadow-sm text-sm"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                Exportar Resumo do Mês
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 z-10 w-full">
-                        <button onClick={onClose} className="px-4 py-2 font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
+                    {/* Footer Esq */}
+                    <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 flex-shrink-0">
+                        <button onClick={onClose} className="px-4 py-2 font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition">{t('cancel')}</button>
                         <button onClick={handleSave} disabled={isSaving} className="px-5 py-2 font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition sm:w-auto w-full">
-                            {isSaving ? 'Salvando...' : 'Salvar Dados'}
+                            {isSaving ? t('saving') : t('save')}
                         </button>
                     </div>
                 </div>
@@ -167,13 +318,17 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                             <div className="mt-4 bg-slate-100 border border-slate-300 rounded-[2px] h-16 w-full flex items-center justify-center text-slate-400 italic">Estrutura da Anamnese...</div>
                         </div>
 
-                        <div className={`mt-auto ${alignClass}`}>
-                            <div className={`w-24 border-t border-slate-800 inline-block mt-4 mb-1 ${signatureAlign === 'center' ? 'mx-auto' : signatureAlign === 'right' ? 'ml-auto' : ''}`}></div>
+                        <div className={`mt-auto flex flex-col ${signatureAlign === 'center' ? 'items-center text-center' : signatureAlign === 'right' ? 'items-end text-right' : 'items-start text-left'}`}>
+                            {signatureImage && (
+                                <img src={signatureImage} alt="Assinatura" className="h-8 object-contain mb-1" />
+                            )}
+                            <div className="w-24 border-t border-slate-800 mb-1"></div>
                             <div className="font-bold">{fullName || 'Nome do Médico'}</div>
                             {crm && <div className="text-[8px] text-slate-500">CRM: {crm}</div>}
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <Modal

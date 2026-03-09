@@ -1,32 +1,87 @@
 'use client';
+// v2-flags-refresh
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { logoutUser } from '@/app/actions/auth.actions';
+import { getDoctorProfile } from '@/app/actions/profile.actions';
 import SettingsModal from '@/components/SettingsModal';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 
 export default function HeaderSettings() {
+    const t = useTranslations('Header');
+    const locale = useLocale();
+    const router = useRouter();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [profile, setProfile] = useState<any>(null);
+    const [cachedName, setCachedName] = useState<string>('');
+
+    useEffect(() => {
+        const storedName = localStorage.getItem('@AnamnesePro:doctorName');
+        if (storedName) setCachedName(storedName);
+
+        getDoctorProfile().then(p => {
+            setProfile(p);
+            if (p?.fullName) {
+                localStorage.setItem('@AnamnesePro:doctorName', p.fullName);
+                setCachedName(p.fullName);
+            }
+        });
+    }, []);
+
+    const setLanguage = (locale: string) => {
+        document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000`;
+        router.refresh();
+    };
+
+    const getInitials = (name?: string) => {
+        if (!name) return 'DR';
+        return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+    };
 
     return (
-        <div className="absolute top-4 right-4 sm:top-8 sm:right-8 flex items-center gap-2">
-            <button
-                onClick={() => logoutUser()}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 bg-white rounded-full shadow-sm border border-slate-200 hover:bg-red-50 hover:border-red-200 transition"
-            >
-                Trocar Perfil
-            </button>
+        <div className="absolute top-4 right-4 sm:top-8 sm:right-8 flex items-center gap-3 z-30">
+            <div key={locale} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 p-1 rounded-full shadow-sm">
+                <button
+                    onClick={() => setLanguage('pt')}
+                    className={`relative w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 overflow-hidden ${locale === 'pt' ? 'ring-2 ring-emerald-500 bg-emerald-50 scale-110 shadow-md z-10' : 'hover:bg-slate-100 opacity-60 hover:opacity-100 grayscale-[0.3] hover:grayscale-0'}`}
+                    title="Português">
+                    <img src="https://flagcdn.com/w40/br.png" alt="PT-BR" className="w-5 h-auto rounded-[2px] shadow-sm" />
+                </button>
+                <button
+                    onClick={() => setLanguage('en')}
+                    className={`relative w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 overflow-hidden ${locale === 'en' ? 'ring-2 ring-emerald-500 bg-emerald-50 scale-110 shadow-md z-10' : 'hover:bg-slate-100 opacity-60 hover:opacity-100 grayscale-[0.3] hover:grayscale-0'}`}
+                    title="English">
+                    <img src="https://flagcdn.com/w40/us.png" alt="EN-US" className="w-5 h-auto rounded-[2px] shadow-sm" />
+                </button>
+                <button
+                    onClick={() => setLanguage('es')}
+                    className={`relative w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 overflow-hidden ${locale === 'es' ? 'ring-2 ring-emerald-500 bg-emerald-50 scale-110 shadow-md z-10' : 'hover:bg-slate-100 opacity-60 hover:opacity-100 grayscale-[0.3] hover:grayscale-0'}`}
+                    title="Español">
+                    <img src="https://flagcdn.com/w40/es.png" alt="ES" className="w-5 h-auto rounded-[2px] shadow-sm" />
+                </button>
+            </div>
+
             <button
                 onClick={() => setIsSettingsOpen(true)}
-                className="p-2.5 text-slate-500 hover:text-emerald-700 bg-white rounded-full shadow-sm border border-slate-200 hover:bg-emerald-50 transition"
-                aria-label="Configurações do Profissional"
-                title="Configurações do Profissional"
+                className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shadow-md border-[3px] border-slate-100 hover:border-slate-300 hover:ring-2 hover:ring-emerald-400 hover:scale-105 transition-all duration-300 overflow-hidden ml-1"
+                title={profile?.fullName || cachedName || t('settingsLabel')}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                    getInitials(profile?.fullName || cachedName)
+                )}
             </button>
-            <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+            <button
+                onClick={() => logoutUser()}
+                className="hidden sm:block px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 bg-white rounded-full shadow-sm border border-slate-200 hover:bg-red-50 hover:border-red-200 transition"
+            >
+                Sair
+            </button>
+
+            <SettingsModal isOpen={isSettingsOpen} onClose={() => { setIsSettingsOpen(false); getDoctorProfile().then(p => setProfile(p)); }} />
         </div>
     );
 }

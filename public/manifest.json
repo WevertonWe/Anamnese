@@ -1,6 +1,6 @@
 {
-    "name": "Sistema de Anamnese Inteligente",
-    "short_name": "Agendha",
+    "name": "Anamnese Pro",
+    "short_name": "Anamnese Pro",
     "description": "Sistema médico offline-first para registro de consultas com suporte completo a gravação de áudio e geração de templates dinâmicos.",
     "start_url": "/",
     "display": "standalone",
