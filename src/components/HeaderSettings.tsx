@@ -7,6 +7,7 @@ import { getDoctorProfile } from '@/app/actions/profile.actions';
 import SettingsModal from '@/components/SettingsModal';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function HeaderSettings() {
     const t = useTranslations('Header');
@@ -43,6 +44,14 @@ export default function HeaderSettings() {
 
     return (
         <div className="absolute top-4 right-4 sm:top-8 sm:right-8 flex items-center gap-3 z-30">
+            {profile?.isSuperAdmin && (
+                <Link 
+                    href="/admin" 
+                    className="hidden sm:flex px-4 py-2 text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-200 rounded-full shadow-sm transition"
+                >
+                    Painel Admin
+                </Link>
+            )}
             <div key={locale} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 p-1 rounded-full shadow-sm">
                 <button
                     onClick={() => setLanguage('pt')}

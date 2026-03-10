@@ -28,16 +28,16 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
         if (isOpen) {
             getDoctorProfile().then(profile => {
                 if (profile) {
-                    setFullName(profile.fullName || '');
-                    setCrm(profile.crm || '');
-                    setSpecialty(profile.specialty || '');
-                    setSignatureAlign(profile.signatureAlign || 'center');
-                    setShowLogoText(profile.showLogoText ?? true);
-                    setRole(profile.role || 'DOCTOR');
-                    setAiModel(profile.aiModel || 'gemini-1.5-flash');
-                    setLanguage(profile.language || 'pt');
-                    setSignatureImage(profile.signatureImage || null);
-                    setLogoUrl(profile.logoUrl || null);
+                    setFullName(profile?.fullName || '');
+                    setCrm(profile?.crm || '');
+                    setSpecialty(profile?.specialty || '');
+                    setSignatureAlign(profile?.signatureAlign || 'center');
+                    setShowLogoText(profile?.showLogoText ?? true);
+                    setRole(profile?.role || 'DOCTOR');
+                    setAiModel(profile?.aiModel || 'gemini-1.5-flash');
+                    setLanguage(profile?.language || 'pt');
+                    setSignatureImage(profile?.signatureImage ?? null);
+                    setLogoUrl(profile?.logoUrl ?? "");
                 }
             });
         }
@@ -77,7 +77,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
 
     return (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col md:flex-row max-h-[90vh]">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col md:flex-row max-h-[85vh]">
 
                 {/* Lado Esquerdo: Formulário */}
                 <div className="flex-1 flex flex-col w-full h-full overflow-hidden">
@@ -119,12 +119,26 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                             </div>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">{t('crm')}</label>
-                                    <input type="text" value={crm} onChange={e => setCrm(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: CRM-SP 123456" />
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Licença Médica (CRM/Outros)</label>
+                                    <input 
+                                        type="text" 
+                                        value={crm} 
+                                        onChange={e => setCrm(e.target.value)} 
+                                        readOnly={role === 'DOCTOR'}
+                                        className={`w-full border border-slate-300 rounded-lg p-2 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none ${role === 'DOCTOR' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`} 
+                                        placeholder="Ex: CRM-SP 123456" 
+                                    />
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">{t('specialty')}</label>
-                                    <input type="text" value={specialty} onChange={e => setSpecialty(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: Cardiologia" />
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Especialidade</label>
+                                    <input 
+                                        type="text" 
+                                        value={specialty} 
+                                        onChange={e => setSpecialty(e.target.value)} 
+                                        readOnly={role === 'DOCTOR'}
+                                        className={`w-full border border-slate-300 rounded-lg p-2 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none ${role === 'DOCTOR' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`} 
+                                        placeholder="Ex: Cardiologia" 
+                                    />
                                 </div>
                             </div>
                             <div>

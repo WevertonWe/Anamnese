@@ -2,7 +2,6 @@
 
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { Role } from '@prisma/client';
 
 export async function getDoctorProfile() {
     try {
@@ -14,7 +13,7 @@ export async function getDoctorProfile() {
         if (!profile) return null;
 
         // Validação contínua de Segurança
-        if (profile.deletedAt || profile.status === 'BLOCKED') {
+        if ((profile as any).deletedAt || profile.status === 'BLOCKED') {
             await logoutUser();
             return null;
         }
@@ -22,10 +21,12 @@ export async function getDoctorProfile() {
         const adminEmails = process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',') : [];
         const isSuperAdmin = profile.role === 'ADMIN' && adminEmails.includes(profile.email);
         
+        console.log(`DEBUG AUTH: Email logado: ${profile.email} | Emails Permitidos: ${process.env.ADMIN_EMAILS} | isSuperAdmin: ${isSuperAdmin}`);
+
         return {
             ...profile,
             isSuperAdmin,
-            subscriptionValue: profile.subscriptionValue ? Number(profile.subscriptionValue) : 0
+            subscriptionValue: Number(profile.subscriptionValue) || 0
         };
     } catch (err) {
         return null;
@@ -38,7 +39,7 @@ export async function saveDoctorProfile(data: {
     specialty: string,
     signatureAlign?: string,
     showLogoText?: boolean,
-    role?: Role,
+    role?: string,
     aiModel?: string,
     language?: string,
     avatarUrl?: string | null,
@@ -58,7 +59,7 @@ export async function saveDoctorProfile(data: {
                 specialty: data.specialty,
                 signatureAlign: data.signatureAlign,
                 showLogoText: data.showLogoText,
-                role: data.role,
+                role: data.role as any,
                 aiModel: data.aiModel,
                 language: data.language,
                 avatarUrl: data.avatarUrl,

@@ -69,7 +69,7 @@ export async function getDoctorsList(search: string = "", status: string = "ALL"
 
     return doctors.map(doc => ({
         ...doc,
-        subscriptionValue: doc.subscriptionValue ? Number(doc.subscriptionValue) : 0
+        subscriptionValue: Number(doc?.subscriptionValue) || 0
     }));
 }
 
