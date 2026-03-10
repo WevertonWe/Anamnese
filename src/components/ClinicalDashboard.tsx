@@ -106,7 +106,7 @@ export default function ClinicalDashboard({ refreshTrigger = 0 }: { refreshTrigg
 
             {/* Template Mais Usado */}
             <div className="flex-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
-                <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
                 </div>
                 <div className="overflow-hidden">

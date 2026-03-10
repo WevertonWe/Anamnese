@@ -120,7 +120,7 @@ export default function InsightsPreviewModal({
                         {/* Lado Direito: AI Insights */}
                         <div>
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                 {t('aiInsights')}
                             </h3>
 
@@ -145,14 +145,14 @@ export default function InsightsPreviewModal({
 
                                     {/* Hipótese */}
                                     <div>
-                                        <label className="text-xs font-bold text-purple-700 mb-1 block flex items-center gap-1">
+                                        <label className="text-xs font-bold text-emerald-700 mb-1 block flex items-center gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                                             {t('hypothesisLabel')}
                                         </label>
                                         <textarea
                                             value={hipotese}
                                             onChange={e => setHipotese(e.target.value)}
-                                            className="w-full border border-purple-200 rounded-lg p-3 text-sm text-slate-800 focus:ring-2 focus:ring-purple-400 outline-none h-20 resize-none bg-purple-50/40"
+                                            className="w-full border border-emerald-200 rounded-lg p-3 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-400 outline-none h-20 resize-none bg-emerald-50/40"
                                             placeholder={t('hypothesisPlaceholder')}
                                         />
                                     </div>

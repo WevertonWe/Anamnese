@@ -12,7 +12,7 @@ export default function TemplateSelector({ onSelect }: { onSelect?: (id: string)
     const [templates, setTemplates] = useState<Record<string, unknown>[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [role, setRole] = useState('doctor');
+    const [role, setRole] = useState('DOCTOR');
 
     const loadData = async () => {
         const data = await getTemplates();
@@ -74,7 +74,7 @@ export default function TemplateSelector({ onSelect }: { onSelect?: (id: string)
                                 <div className="flex justify-between items-start">
                                     <span className="font-medium text-slate-700 group-hover:text-emerald-700">{String(tpl.name)}</span>
                                     <div className="flex items-center gap-2">
-                                        {role === 'doctor' && (
+                                        {role === 'DOCTOR' && (
                                             <button
                                                 onClick={(e) => handleDelete(e, String(tpl.id))}
                                                 className="text-slate-300 hover:text-red-500 transition-colors p-1"

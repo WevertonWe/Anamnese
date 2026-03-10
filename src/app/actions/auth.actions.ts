@@ -19,7 +19,7 @@ export async function registerUser(data: { name: string, email: string, password
                 fullName: data.name,
                 crm: "",
                 specialty: "",
-                role: "doctor"
+                role: "DOCTOR"
             }
         });
 
@@ -38,6 +38,15 @@ export async function loginUserWithCredentials(email: string, password: string) 
         const isValid = await bcrypt.compare(password, profile.passwordHash);
         if (!isValid) return { success: false, error: "Credenciais inválidas." };
 
+        if (profile.status === 'BLOCKED') {
+            return { success: false, error: "Conta bloqueada por inadimplência ou infração. Contate o suporte." };
+        }
+
+        await prisma.doctorProfile.update({
+            where: { id: profile.id },
+            data: { lastLoginAt: new Date() }
+        });
+
         const cookieStore = await cookies();
         cookieStore.set('app_user_id', profile.id, {
             httpOnly: true,
@@ -46,8 +55,9 @@ export async function loginUserWithCredentials(email: string, password: string) 
             maxAge: 60 * 60 * 24 * 7 // 1 semana
         });
 
-        // Mantendo compatibilidade legada
+        // Mantendo compatibilidade legada e adicionando state do SaaS
         cookieStore.set('app_role', profile.role, { path: '/', maxAge: 60 * 60 * 24 * 7 });
+        cookieStore.set('app_status', profile.status, { path: '/', maxAge: 60 * 60 * 24 * 7 });
 
         return { success: true };
     } catch (err) {
@@ -60,6 +70,7 @@ export async function logoutUser() {
     const cookieStore = await cookies();
     cookieStore.delete('app_user_id');
     cookieStore.delete('app_role');
+    cookieStore.delete('app_status');
     redirect('/login');
 }
 

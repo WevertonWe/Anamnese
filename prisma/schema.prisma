@@ -6,11 +6,22 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+enum DoctorStatus {
+  ACTIVE
+  BLOCKED
+}
+
 model User {
   id        String     @id @default(cuid())
   email     String     @unique
   name      String
-  role      String     @default("DOCTOR") // DOCTOR, ADMIN
+  role      Role       @default(DOCTOR)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   
@@ -19,12 +30,13 @@ model User {
 
 model DoctorProfile {
   id             String   @id @default(cuid())
-  role           String   @default("doctor") // "doctor" ou "patient"
+  role           Role     @default(DOCTOR)
   
   // Authentication & Account
   email          String    @unique
   passwordHash   String    @default("")
   avatarUrl      String?
+  logoUrl        String?
 
   fullName       String
   crm            String
@@ -39,10 +51,19 @@ model DoctorProfile {
   // AI Settings
   aiModel        String   @default("gemini-1.5-flash") // "gemini-1.5-flash", "gemini-1.5-pro"
   
+  // SaaS Admin Fields
+  status                 DoctorStatus @default(ACTIVE)
+  subscriptionValue      Decimal?
+  subscriptionExpiresAt  DateTime?
+  lastLoginAt            DateTime?
+  createdById            String?
+  
   updatedAt      DateTime @updatedAt
 
   PatientRecord  PatientRecord[]
   Template       Template[]
+  Subscription   Subscription[]
+  Office         Office[]
 }
 
 model Template {
@@ -88,3 +109,37 @@ model PatientRecord {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// Modelos de Infraestrutura SaaS
+
+model Subscription {
+  id        String   @id @default(cuid())
+  doctorId  String
+  doctor    DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  plan      String   @default("FREE")
+  status    String   @default("ACTIVE")
+  startDate DateTime @default(now())
+  endDate   DateTime?
+  updatedAt DateTime @updatedAt
+}
+
+model Office {
+  id        String   @id @default(cuid())
+  doctorId  String
+  doctor    DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  name      String
+  address   String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  userId    String?  // Pode ser ID do DoctorProfile ou User
+  entityId  String?
+  details   String?  // JSON estruturado
+  createdAt DateTime @default(now())
+}
+

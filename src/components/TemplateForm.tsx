@@ -14,7 +14,7 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
     const t = useTranslations('TemplateForm');
     const locale = useLocale();
     const [template, setTemplate] = useState<any>(null);
-    const [role, setRole] = useState('doctor');
+    const [role, setRole] = useState('DOCTOR');
     const [formData, setFormData] = useState<Record<string, string>>({});
     const [patientName, setPatientName] = useState('');
     const [consultDate, setConsultDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -130,7 +130,7 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
                 </div>
             </div>
 
-            {role === 'doctor' && (
+            {role === 'DOCTOR' && (
                 <div className="mb-6 bg-slate-50 rounded-xl p-4 border border-slate-100">
                     <AudioRecorder templateId={templateId} onResult={handleAiResult} minimal={true} />
                 </div>

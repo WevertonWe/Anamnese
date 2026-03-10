@@ -13,10 +13,11 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
     const [specialty, setSpecialty] = useState('');
     const [signatureAlign, setSignatureAlign] = useState('center');
     const [showLogoText, setShowLogoText] = useState(true);
-    const [role, setRole] = useState('doctor');
+    const [role, setRole] = useState('DOCTOR');
     const [aiModel, setAiModel] = useState('gemini-1.5-flash');
     const [language, setLanguage] = useState('pt');
     const [signatureImage, setSignatureImage] = useState<string | null>(null);
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
     const [modalConfig, setModalConfig] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'error' | 'info' }>({
@@ -32,10 +33,11 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                     setSpecialty(profile.specialty || '');
                     setSignatureAlign(profile.signatureAlign || 'center');
                     setShowLogoText(profile.showLogoText ?? true);
-                    setRole(profile.role || 'doctor');
+                    setRole(profile.role || 'DOCTOR');
                     setAiModel(profile.aiModel || 'gemini-1.5-flash');
                     setLanguage(profile.language || 'pt');
                     setSignatureImage(profile.signatureImage || null);
+                    setLogoUrl(profile.logoUrl || null);
                 }
             });
         }
@@ -43,7 +45,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
 
     const handleSave = async () => {
         setIsSaving(true);
-        const res = await saveDoctorProfile({ fullName, crm, specialty, signatureAlign, showLogoText, role, aiModel, language, signatureImage: signatureImage || undefined });
+        const res = await saveDoctorProfile({ fullName, crm, specialty, signatureAlign, showLogoText, role: role as any, aiModel, language, signatureImage: signatureImage || undefined, logoUrl: logoUrl || undefined });
         setIsSaving(false);
         if (res.success) {
             document.cookie = `NEXT_LOCALE=${language}; path=/; max-age=31536000`;
@@ -98,14 +100,14 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                                 <label className="block text-sm font-bold text-slate-700 mb-1">{t('roleLabel')}</label>
                                 <div className="flex bg-slate-100 p-1 rounded-lg">
                                     <button
-                                        onClick={() => setRole('doctor')}
-                                        className={`flex-1 text-sm py-1.5 rounded-md font-medium transition ${role === 'doctor' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                                        onClick={() => setRole('DOCTOR')}
+                                        className={`flex-1 text-sm py-1.5 rounded-md font-medium transition ${role === 'DOCTOR' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         {t('doctorRole')}
                                     </button>
                                     <button
-                                        onClick={() => setRole('patient')}
-                                        className={`flex-1 text-sm py-1.5 rounded-md font-medium transition ${role === 'patient' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                                        onClick={() => setRole('PATIENT')}
+                                        className={`flex-1 text-sm py-1.5 rounded-md font-medium transition ${role === 'PATIENT' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         {t('patientRole')}
                                     </button>
@@ -148,6 +150,14 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                                 <input type="checkbox" checked={showLogoText} onChange={e => setShowLogoText(e.target.checked)} className="w-4 h-4 text-emerald-600 rounded cursor-pointer" />
                                 <span className="text-sm font-medium text-slate-700">Imprimir &quot;Anamnese Inteligente PWA&quot; no cabeçalho</span>
                             </label>
+
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Logotipo da Clínica</label>
+                                <div className="flex flex-col gap-2">
+                                    {logoUrl && <img src={logoUrl} alt="Logotipo" className="h-16 object-contain border border-slate-200 rounded-lg p-1 bg-white self-start" />}
+                                    <input type="file" accept="image/*" onChange={e => handleFileToBase64(e, setLogoUrl)} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer w-full" />
+                                </div>
+                            </div>
 
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Assinatura Digital</label>
@@ -197,6 +207,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
 
                     <div className="flex-1 bg-white shadow-sm border border-slate-200 aspect-[1/1.4] w-full p-4 flex flex-col justify-between text-[10px] leading-tight text-slate-800 relative">
                         <div className="text-center">
+                            {logoUrl && <img src={logoUrl} alt="Logo" className="h-6 object-contain mx-auto mb-1" />}
                             {showLogoText && <div className="text-[6px] text-slate-400 absolute top-2 right-2 uppercase">Anamnese Inteligente PWA</div>}
                             <div className="font-bold text-[11px] mb-1">RELATÓRIO CLÍNICO</div>
                             {fullName && <div className="font-medium">{fullName}</div>}

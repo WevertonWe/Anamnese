@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { Role } from '@prisma/client';
 
 export async function getDoctorProfile() {
     try {
@@ -22,11 +23,12 @@ export async function saveDoctorProfile(data: {
     specialty: string,
     signatureAlign?: string,
     showLogoText?: boolean,
-    role?: string,
+    role?: Role,
     aiModel?: string,
     language?: string,
     avatarUrl?: string | null,
-    signatureImage?: string | null
+    signatureImage?: string | null,
+    logoUrl?: string | null
 }) {
     try {
         const { getLoggedUserId } = await import('@/app/actions/auth.actions');
@@ -45,7 +47,8 @@ export async function saveDoctorProfile(data: {
                 aiModel: data.aiModel,
                 language: data.language,
                 avatarUrl: data.avatarUrl,
-                signatureImage: (data as any).signatureImage
+                signatureImage: (data as any).signatureImage,
+                logoUrl: (data as any).logoUrl
             }
         });
 

@@ -2,13 +2,22 @@
 
 import { loginUserWithCredentials, registerUser } from '@/app/actions/auth.actions';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+
+    useEffect(() => {
+        const errorQuery = searchParams.get('error');
+        if (errorQuery) {
+            setErrorMsg(errorQuery);
+        }
+    }, [searchParams]);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -128,5 +137,17 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     );
 }

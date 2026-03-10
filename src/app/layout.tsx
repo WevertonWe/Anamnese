@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+export const maxDuration = 60; // Configura Vercel para permitir até 60s em todas as rotas filhas
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
@@ -24,13 +25,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Agendha - Anamnese Inteligente",
-  description: "Sistema médico offline-first para registro de consultas com suporte completo a gravação de áudio e geração de templates dinâmicos.",
+  title: "Anamnese Pro - Gestão Médica",
+  description: "Sistema médico SaaS com anamnese IA, gestão de pacientes e templates flexíveis.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Agendha",
+    title: "Anamnese",
   },
   formatDetection: {
     telephone: false,
