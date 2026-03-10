@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 import { getAdminDashStats } from '@/app/actions/admin.actions';
 import DoctorsTable from '@/components/admin/DoctorsTable';
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
     title: 'Painel Admin | Anamnese Pro',
     description: 'Gestão de usuários, assinaturas e faturamento SaaS',

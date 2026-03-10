@@ -57,6 +57,7 @@ model DoctorProfile {
   subscriptionExpiresAt  DateTime?
   lastLoginAt            DateTime?
   createdById            String?
+  deletedAt              DateTime?
   
   updatedAt      DateTime @updatedAt
 

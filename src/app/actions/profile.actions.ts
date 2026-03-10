@@ -6,12 +6,27 @@ import { Role } from '@prisma/client';
 
 export async function getDoctorProfile() {
     try {
-        const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+        const { getLoggedUserId, logoutUser } = await import('@/app/actions/auth.actions');
         const doctorId = await getLoggedUserId();
         if (!doctorId) return null;
 
         const profile = await prisma.doctorProfile.findUnique({ where: { id: doctorId } });
-        return profile || null;
+        if (!profile) return null;
+
+        // Validação contínua de Segurança
+        if (profile.deletedAt || profile.status === 'BLOCKED') {
+            await logoutUser();
+            return null;
+        }
+
+        const adminEmails = process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',') : [];
+        const isSuperAdmin = profile.role === 'ADMIN' && adminEmails.includes(profile.email);
+        
+        return {
+            ...profile,
+            isSuperAdmin,
+            subscriptionValue: profile.subscriptionValue ? Number(profile.subscriptionValue) : 0
+        };
     } catch (err) {
         return null;
     }

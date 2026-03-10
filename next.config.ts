@@ -11,7 +11,20 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '4mb',
+    },
+  },
+  async redirects() {
+    return [
+      {
+        source: '/register',
+        destination: '/login',
+        permanent: false, // 307 Temporary Redirect
+      },
+    ];
+  },
 };
 
 export default withSerwist(withNextIntl(nextConfig));

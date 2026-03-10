@@ -9,7 +9,6 @@ function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
-    const [isRegistering, setIsRegistering] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
@@ -30,30 +29,16 @@ function LoginContent() {
         setErrorMsg('');
         setIsLoading(true);
 
-        if (isRegistering) {
-            if (!formData.name || !formData.email || !formData.password) {
-                setErrorMsg('Preencha todos os campos.');
-                setIsLoading(false);
-                return;
-            }
-            const res = await registerUser(formData);
-            if (res.success) {
-                router.push('/');
-            } else {
-                setErrorMsg(res.error || 'Erro no cadastro.');
-            }
+        if (!formData.email || !formData.password) {
+            setErrorMsg('Preencha e-mail e senha.');
+            setIsLoading(false);
+            return;
+        }
+        const res = await loginUserWithCredentials(formData.email, formData.password);
+        if (res.success) {
+            router.push('/');
         } else {
-            if (!formData.email || !formData.password) {
-                setErrorMsg('Preencha e-mail e senha.');
-                setIsLoading(false);
-                return;
-            }
-            const res = await loginUserWithCredentials(formData.email, formData.password);
-            if (res.success) {
-                router.push('/');
-            } else {
-                setErrorMsg(res.error || 'Credenciais inválidas.');
-            }
+            setErrorMsg(res.error || 'Credenciais inválidas.');
         }
 
         setIsLoading(false);
@@ -69,7 +54,7 @@ function LoginContent() {
 
                 <div className="p-8 space-y-6">
                     <div className="text-center">
-                        <h2 className="text-xl font-bold text-slate-800 mb-1">{isRegistering ? 'Criar sua Conta' : 'Acesse seu Perfil'}</h2>
+                        <h2 className="text-xl font-bold text-slate-800 mb-1">Acesse seu Perfil</h2>
                         <p className="text-slate-500 text-sm">Gerencie seus relatórios com segurança.</p>
                     </div>
 
@@ -80,18 +65,6 @@ function LoginContent() {
                     )}
 
                     <form onSubmit={handleAuth} className="space-y-4">
-                        {isRegistering && (
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nome Completo</label>
-                                <input
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg p-3 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                                    placeholder="Ex: Dr. João Silva"
-                                />
-                            </div>
-                        )}
                         <div>
                             <label className="block text-xs font-bold text-slate-700 uppercase mb-1">E-mail</label>
                             <input
@@ -118,22 +91,9 @@ function LoginContent() {
                             disabled={isLoading}
                             className={`w-full p-4 rounded-xl font-bold text-white transition-all ${isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg'}`}
                         >
-                            {isLoading ? 'Aguarde...' : isRegistering ? 'Cadastrar e Entrar' : 'Entrar na Plataforma'}
+                            {isLoading ? 'Aguarde...' : 'Entrar na Plataforma'}
                         </button>
                     </form>
-
-                    <div className="text-center pt-2">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setIsRegistering(!isRegistering);
-                                setErrorMsg('');
-                            }}
-                            className="text-sm font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
-                        >
-                            {isRegistering ? 'Já tenho uma conta. Quero fazer login.' : 'Não tem conta? Cadastre-se agora.'}
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
