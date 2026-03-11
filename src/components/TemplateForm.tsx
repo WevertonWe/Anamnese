@@ -8,6 +8,8 @@ import { saveRecord } from '@/app/actions/history.actions';
 import { exportAnamneseToPDF } from '@/lib/exportPdf';
 import AudioRecorder from './AudioRecorder';
 import InsightsPreviewModal from './InsightsPreviewModal';
+import Modal from '@/components/ui/Modal';
+import { generateRemoteLink } from '@/app/actions/history.actions';
 import { useTranslations, useLocale } from 'next-intl';
 
 export default function TemplateForm({ templateId, onSaved }: { templateId: string, onSaved?: () => void }) {
@@ -20,6 +22,11 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
     const [consultDate, setConsultDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [isSaving, setIsSaving] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
+
+    // Remote Link States
+    const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+    const [generatedLink, setGeneratedLink] = useState('');
+    const [isRemoteModalOpen, setIsRemoteModalOpen] = useState(false);
 
     // Translation Cache Stats
     const [translations, setTranslations] = useState<Record<string, string>>({});
@@ -109,6 +116,35 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
         setShowPreview(false);
         const bodyText = Object.entries(enrichedData).map(([k, v]) => `${k.toUpperCase()}:\n${v}`).join('\n\n');
         window.location.href = `mailto:?subject=Relatório Clínico - ${template?.name}&body=${encodeURIComponent(bodyText)}`;
+    };
+
+    const handleGenerateLink = async () => {
+        if (!patientName) {
+            alert("Preencha o Nome do Paciente antes de gerar o link remoto.");
+            return;
+        }
+        setIsGeneratingLink(true);
+        try {
+            const res = await generateRemoteLink(patientName, templateId);
+            if (res.success && res.link) {
+                setGeneratedLink(res.link);
+            } else {
+                alert(res.error || "Erro na geração do formulário. Tente novamente mais tarde.");
+            }
+        } catch (err) {
+            console.error("Remote Link Gen Error:", err);
+            alert("Sistema ocupado ou erro inexperado. Por favor, tente novamente.");
+        } finally {
+            setIsGeneratingLink(false);
+        }
+    };
+
+    const handleCopyLink = () => {
+        const text = `Olá, ${patientName}! Boas-vindas à consulta.\n\nPor favor, preencha sua pré-anamnese pelo link abaixo:\n🔗 ${generatedLink}\n\nObrigado!`;
+        navigator.clipboard.writeText(text);
+        alert("Mensagem copiada para a área de transferência!");
+        setIsRemoteModalOpen(false);
+        setGeneratedLink('');
     };
 
     if (!template) {
@@ -238,7 +274,7 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
                 })}
             </div>
 
-            <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 flex-wrap">
                 <button
                     onClick={() => {
                         setFormData({});
@@ -248,6 +284,12 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
                     className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition"
                 >
                     {t('clear')}
+                </button>
+                <button
+                    onClick={() => setIsRemoteModalOpen(true)}
+                    className="px-4 py-2 text-emerald-700 bg-emerald-50 border border-emerald-100 font-bold hover:bg-emerald-100 rounded-lg transition"
+                >
+                    Gerar Envio
                 </button>
                 <button
                     onClick={() => setShowPreview(true)}
@@ -270,6 +312,64 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
                 onEmail={handleEmail}
                 onClose={() => setShowPreview(false)}
             />
+
+            <Modal
+                isOpen={isRemoteModalOpen}
+                title="Gerar Envio Remoto"
+                message="Crie um link seguro para o paciente preencher a anamnese de casa."
+                type="info"
+                onClose={() => setIsRemoteModalOpen(false)}
+            >
+                <div className="space-y-4">
+                    {!generatedLink ? (
+                        <>
+                            <div className="flex flex-col text-left">
+                                <label className="text-sm font-bold text-slate-700 mb-1">Nome do Paciente</label>
+                                <input
+                                    type="text"
+                                    value={patientName}
+                                    onChange={e => setPatientName(e.target.value)}
+                                    className="w-full border border-slate-300 rounded-lg p-3 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    placeholder="Ex: Maria Antonieta..."
+                                />
+                            </div>
+                            <button
+                                onClick={handleGenerateLink}
+                                disabled={isGeneratingLink || !patientName}
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 disabled:bg-slate-300 transition-colors"
+                            >
+                                {isGeneratingLink ? (
+                                    <>
+                                        <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        Gerando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                        Gerar Link Único
+                                    </>
+                                )}
+                            </button>
+                        </>
+                    ) : (
+                        <div className="flex flex-col gap-4 text-left">
+                            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <p className="text-xs text-slate-500 font-bold mb-1 uppercase tracking-wider">Link Gerado (Acesso Único)</p>
+                                <a href={generatedLink} target="_blank" rel="noreferrer" className="text-emerald-600 font-medium break-all text-sm hover:underline">
+                                    {generatedLink}
+                                </a>
+                            </div>
+                            <button
+                                onClick={handleCopyLink}
+                                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                Copiar p/ WhatsApp
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 }

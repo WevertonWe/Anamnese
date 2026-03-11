@@ -51,10 +51,7 @@ export async function saveDoctorProfile(data: {
         const { getLoggedUserId } = await import('@/app/actions/auth.actions');
         const doctorId = await getLoggedUserId();
         if (!doctorId) return { success: false, error: "Não autenticado." };
-
-        await prisma.doctorProfile.update({
-            where: { id: doctorId },
-            data: {
+            const updateData: any = {
                 fullName: data.fullName,
                 crm: data.crm,
                 specialty: data.specialty,
@@ -64,11 +61,16 @@ export async function saveDoctorProfile(data: {
                 aiModel: data.aiModel,
                 language: data.language,
                 avatarUrl: data.avatarUrl,
-                signatureImage: (data as any).signatureImage,
-                logoUrl: (data as any).logoUrl,
-                notificationsEnabled: (data as any).notificationsEnabled
-            }
-        });
+            };
+
+            if (data.signatureImage !== undefined) updateData.signatureImage = data.signatureImage;
+            if (data.logoUrl !== undefined) updateData.logoUrl = data.logoUrl;
+            if ((data as any).notificationsEnabled !== undefined) updateData.notificationsEnabled = (data as any).notificationsEnabled;
+
+            const newProfile = await (prisma.doctorProfile as any).update({
+                where: { id: doctorId },
+                data: updateData
+            });
 
         if (data.language) {
             const { cookies } = await import('next/headers');

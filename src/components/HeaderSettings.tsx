@@ -42,6 +42,26 @@ export default function HeaderSettings() {
 
 
 
+    const playSuccessSound = () => {
+        try {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     return (
         <div className="absolute top-4 right-4 sm:top-8 sm:right-8 flex items-center gap-3 z-30">
             {profile?.isSuperAdmin && (
@@ -52,6 +72,15 @@ export default function HeaderSettings() {
                     Painel Admin
                 </Link>
             )}
+
+            <button
+                onClick={playSuccessSound}
+                className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-full text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 hover:border-emerald-200 shadow-sm transition-all"
+                title="Testar Áudio do Sistema"
+            >
+                🔈
+            </button>
+
             <div key={locale} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 p-1 rounded-full shadow-sm">
                 <button
                     onClick={() => setLanguage('pt')}

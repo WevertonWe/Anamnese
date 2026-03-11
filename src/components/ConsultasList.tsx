@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { getHistory, deleteRecord, markRecordAsRead, updateRecordStatus } from '@/app/actions/history.actions';
+import { getHistory, deleteRecord, toggleReadStatus, updateRecordStatus } from '@/app/actions/history.actions';
 import { getDoctorProfile } from '@/app/actions/profile.actions';
 import Modal from '@/components/ui/Modal';
 import { exportAnamneseToPDF } from '@/lib/exportPdf';
@@ -88,7 +88,7 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
         );
 
         if (!record.isRead) {
-            markRecordAsRead(record.id).then(() => {
+            toggleReadStatus(record.id).then(() => {
                 setRecords(prev => prev.map(r => r.id === record.id ? { ...r, isRead: true } : r));
             });
         }
@@ -138,16 +138,16 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
                         
                         {/* Progress Bar Amarelo -> Verde */}
                         <div className="mt-3 flex items-center gap-2 cursor-pointer group" onClick={() => {
-                            const newStatus = record.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
+                            const newStatus = record.status === 'COMPLETED' ? 'PENDING' : record.status === 'PENDING' ? 'OPENED' : 'COMPLETED';
                             updateRecordStatus(record.id, newStatus).then(() => {
                                 setRecords(prev => prev.map(r => r.id === record.id ? { ...r, status: newStatus } : r));
                             });
                         }}>
                             <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden flex">
-                                <div className={`h-full transition-all duration-500 ease-out ${record.status === 'COMPLETED' ? 'w-full bg-emerald-500' : 'w-1/2 bg-yellow-400'}`}></div>
+                                <div className={`h-full transition-all duration-500 ease-out ${record.status === 'COMPLETED' ? 'w-full bg-emerald-500' : record.status === 'OPENED' ? 'w-2/3 bg-yellow-400' : 'w-1/3 bg-slate-400'}`}></div>
                             </div>
                             <span className="text-[10px] uppercase font-bold text-slate-400 group-hover:text-slate-600 transition">
-                                {record.status === 'COMPLETED' ? 'Finalizado' : 'Pendente'}
+                                {record.status === 'COMPLETED' ? 'Finalizado' : record.status === 'OPENED' ? 'Visualizado' : 'Pendente'}
                             </span>
                         </div>
                     </div>

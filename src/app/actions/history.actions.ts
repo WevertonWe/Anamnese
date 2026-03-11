@@ -97,11 +97,12 @@ Conduta Anterior: ${conduta}`;
     }
 }
 
-export async function markRecordAsRead(id: string) {
+export async function toggleReadStatus(id: string) {
     try {
+        const record = await prisma.patientRecord.findUnique({ where: { id }, select: { isRead: true } });
         await prisma.patientRecord.update({
             where: { id },
-            data: { isRead: true }
+            data: { isRead: !(record?.isRead || false) }
         });
         revalidatePath('/');
         return { success: true };
@@ -110,9 +111,66 @@ export async function markRecordAsRead(id: string) {
     }
 }
 
+export async function generateRemoteLink(patientName: string, templateId: string) {
+    try {
+        const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+        const doctorId = await getLoggedUserId();
+
+        const newRecord = await prisma.patientRecord.create({
+            data: {
+                patientName: patientName || "Não Identificado",
+                templateId,
+                doctorId: doctorId || undefined,
+                status: 'PENDING',
+                isActive: true,
+                data: "{}"
+            }
+        });
+
+        revalidatePath('/');
+        // Ideal is to use env var for URL, using localhost for request
+        return { success: true, link: `http://localhost:3000/anamnese/${newRecord.id}` };
+    } catch(e) {
+        return { success: false, error: 'Falha ao gerar link remoto' };
+    }
+}
+
+export async function getRemoteFormDetails(slug: string) {
+    try {
+        const record = await prisma.patientRecord.findUnique({
+            where: { id: slug },
+            include: { template: true, doctor: true }
+        });
+        if (!record) return null;
+        
+        if (record.status === 'PENDING' && record.isActive) {
+            await prisma.patientRecord.update({
+                where: { id: slug },
+                data: { status: 'OPENED' }
+            });
+        }
+        
+        return JSON.parse(JSON.stringify(record));
+    } catch(e) { return null; }
+}
+
+export async function submitRemoteForm(slug: string, data: any) {
+    try {
+       await prisma.patientRecord.update({
+           where: { id: slug },
+           data: {
+               data: JSON.stringify(data),
+               status: 'COMPLETED',
+               isActive: false
+           }
+       });
+       return { success: true };
+    } catch(e) { return { success: false, error: 'Erro ao enviar questionário' }; }
+}
+
 export async function updateRecordStatus(id: string, status: string) {
     try {
-        await prisma.patientRecord.update({
+        await (prisma.patientRecord as any).update({
             where: { id },
             data: { status }
         });

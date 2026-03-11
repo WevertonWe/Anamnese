@@ -39,7 +39,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                     setLanguage(profile?.language || 'pt');
                     setSignatureImage(profile?.signatureImage ?? null);
                     setLogoUrl(profile?.logoUrl ?? "");
-                    setNotificationsEnabled(profile?.notificationsEnabled ?? true);
+                    setNotificationsEnabled((profile as any)?.notificationsEnabled ?? true);
                 }
             });
         }
@@ -47,7 +47,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
 
     const handleSave = async () => {
         setIsSaving(true);
-        const res = await saveDoctorProfile({ fullName, crm, specialty, signatureAlign, showLogoText, role: role as any, aiModel, language, signatureImage: signatureImage || undefined, logoUrl: logoUrl || undefined, notificationsEnabled });
+        const res = await saveDoctorProfile({ fullName, crm, specialty, signatureAlign, showLogoText, role: role as any, aiModel, language, signatureImage: signatureImage || undefined, logoUrl: logoUrl || undefined, notificationsEnabled } as any);
         setIsSaving(false);
         if (res.success) {
             document.cookie = `NEXT_LOCALE=${language}; path=/; max-age=31536000`;
@@ -73,9 +73,23 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
     };
 
     const handleTestSound = () => {
-        const audio = new Audio('/app-ping.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(console.error);
+        try {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     if (!isOpen) return null;
@@ -84,8 +98,8 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
     const alignClass = signatureAlign === 'left' ? 'text-left' : signatureAlign === 'right' ? 'text-right' : 'text-center';
 
     return (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col md:flex-row max-h-[85vh]">
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200 py-8">
+            <div className="bg-white rounded-2xl shadow-xl w-[95vw] max-w-6xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col md:flex-row relative my-4 md:my-8 max-h-[calc(100vh-64px)] relative">
 
                 {/* Lado Esquerdo: Formulário */}
                 <div className="flex-1 flex flex-col w-full h-full overflow-hidden">
@@ -101,7 +115,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                     </div>
 
                     {/* Body Esq */}
-                    <div className="p-6 space-y-6 overflow-y-auto flex-1 max-h-[85vh]">
+                    <div className="p-6 space-y-6 overflow-y-auto flex-1 max-h-[85vh] pb-24 relative">
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Identidade</h3>
                             <div>
@@ -125,8 +139,8 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Nome Completo</label>
                                 <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: Dr. João Silva" />
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <div className="flex-1">
+                            <div className="grid grid-cols-2 gap-4 items-end">
+                                <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Licença Médica (CRM/Outros)</label>
                                     <input 
                                         type="text" 
@@ -137,7 +151,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                                         placeholder="Ex: CRM-SP 123456" 
                                     />
                                 </div>
-                                <div className="flex-1">
+                                <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Especialidade</label>
                                     <input 
                                         type="text" 
@@ -232,7 +246,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                     </div>
 
                     {/* Footer Esq */}
-                    <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 flex-shrink-0">
+                    <div className="sticky bottom-0 bg-white border-t p-4 flex justify-end gap-3 z-10 w-full">
                         <button onClick={onClose} className="px-4 py-2 font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition">{t('cancel')}</button>
                         <button onClick={handleSave} disabled={isSaving} className="px-5 py-2 font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition sm:w-auto w-full">
                             {isSaving ? t('saving') : t('save')}
@@ -241,7 +255,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                 </div>
 
                 {/* Lado Direito: Preview */}
-                <div className="hidden md:flex flex-col w-[350px] bg-slate-100 border-l border-slate-200 p-6 flex-shrink-0">
+                <div className="hidden md:flex flex-col w-[400px] bg-slate-100 border-l border-slate-200 p-6 flex-shrink-0 sticky top-0 h-[85vh]">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -252,7 +266,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                         </button>
                     </div>
 
-                    <div className="flex-1 bg-white shadow-2xl border border-gray-200 aspect-[21/29.7] w-[210mm] max-w-full p-8 flex flex-col justify-between text-[10px] leading-tight text-slate-800 relative mx-auto my-auto">
+                    <div className="flex-1 bg-white shadow-2xl rounded p-[40px] aspect-[1/1.4] w-full flex flex-col justify-between text-[10px] leading-tight text-slate-800 relative ring-1 ring-slate-200/50">
                         <div className="text-center">
                             {logoUrl && <img src={logoUrl} alt="Logo" className="h-6 object-contain mx-auto mb-1" />}
                             {showLogoText && <div className="text-[6px] text-slate-400 absolute top-2 right-2 uppercase">Anamnese Inteligente PWA</div>}

@@ -58,6 +58,18 @@ export default function TemplateSelector({ onSelect }: { onSelect?: (id: string)
                 </h3>
 
                 <div className="flex flex-col gap-3">
+                    {/* Botão de Criação Fixado no Topo */}
+                    <button
+                        onClick={() => router.push('/dashboard/templates/new')}
+                        className="w-full p-4 mb-4 border-2 border-dashed border-emerald-300 rounded-lg bg-emerald-50/30 hover:bg-emerald-50 cursor-pointer flex flex-col items-center justify-center gap-2 transition-all"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span className="font-bold text-emerald-700">Criar Novo Template de Anamnese</span>
+                    </button>
+
+                    {/* Lista de Templates */}
                     {templates.map(tpl => {
                         const isSelected = selectedId === String(tpl.id);
                         return (
@@ -105,19 +117,6 @@ export default function TemplateSelector({ onSelect }: { onSelect?: (id: string)
                         );
                     })}
 
-                    {
-                        role === 'doctor' && (
-                            <button
-                                onClick={() => router.push('/templates')}
-                                className="mt-2 w-full flex items-center justify-center gap-2 p-3 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span className="text-sm font-medium">{t('createNew')}</span>
-                            </button>
-                        )
-                    }
                 </div >
             </div >
         </div >

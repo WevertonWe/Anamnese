@@ -4,6 +4,7 @@ import { useState } from 'react';
 import TemplateForm from "@/components/TemplateForm";
 import TemplateSelector from "@/components/TemplateSelector";
 import ConsultasList from "@/components/ConsultasList";
+import RemoteLinksList from "@/components/RemoteLinksList";
 import HeaderSettings from "@/components/HeaderSettings";
 import ClinicalDashboard from "@/components/ClinicalDashboard";
 import { useTranslations, useLocale } from 'next-intl';
@@ -14,6 +15,7 @@ export default function Home() {
   const locale = useLocale();
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("mock_1");
   const [refreshHistoryTrigger, setRefreshHistoryTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState<'consults' | 'links'>('consults');
 
   const handleRecordSaved = () => {
     setRefreshHistoryTrigger(prev => prev + 1);
@@ -47,11 +49,29 @@ export default function Home() {
         </section>
 
         <section className="w-full mt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-lg font-bold text-slate-800">{t('recentConsults')}</h2>
-            <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">{t('localBadge')}</span>
+          <div className="flex items-center gap-4 mb-4 border-b border-slate-200 pb-2">
+            <button 
+              onClick={() => setActiveTab('consults')}
+              className={`text-lg font-bold pb-2 transition-colors relative ${activeTab === 'consults' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              {t('recentConsults')}
+              {activeTab === 'consults' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-emerald-500 rounded-t-full"></div>}
+            </button>
+            <button 
+              onClick={() => setActiveTab('links')}
+              className={`text-lg font-bold pb-2 transition-colors relative flex items-center gap-2 ${activeTab === 'links' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Links Remotos
+              {activeTab === 'links' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-emerald-500 rounded-t-full"></div>}
+            </button>
+            <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full ml-auto">{t('localBadge')}</span>
           </div>
-          <ConsultasList refreshTrigger={refreshHistoryTrigger} />
+          
+          {activeTab === 'consults' ? (
+            <ConsultasList refreshTrigger={refreshHistoryTrigger} />
+          ) : (
+            <RemoteLinksList refreshTrigger={refreshHistoryTrigger} />
+          )}
         </section>
 
         <footer className="mt-8 text-center text-sm text-slate-400">
