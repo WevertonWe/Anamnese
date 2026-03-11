@@ -127,7 +127,13 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
         try {
             const res = await generateRemoteLink(patientName, templateId);
             if (res.success && res.link) {
-                setGeneratedLink(res.link);
+                // Shortlink mount & HTTPS enforcement on Prod
+                const origin = window.location.origin.includes('localhost') 
+                    ? window.location.origin 
+                    : window.location.origin.replace('http:', 'https:');
+                    
+                const shortUrl = `${origin}/a/${res.link.split('/').pop()}`;
+                setGeneratedLink(shortUrl);
             } else {
                 alert(res.error || "Erro na geração do formulário. Tente novamente mais tarde.");
             }

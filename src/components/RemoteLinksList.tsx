@@ -48,7 +48,11 @@ export default function RemoteLinksList({ refreshTrigger = 0 }: { refreshTrigger
     };
 
     const copyLink = (id: string, patientName: string) => {
-        const generatedLink = `${window.location.origin}/anamnese/${id}`;
+        const origin = window.location.origin.includes('localhost') 
+            ? window.location.origin 
+            : window.location.origin.replace('http:', 'https:');
+            
+        const generatedLink = `${origin}/a/${id}`;
         const text = `Olá, ${patientName}! Boas-vindas à consulta.\n\nPor favor, preencha sua pré-anamnese pelo link abaixo:\n🔗 ${generatedLink}\n\nObrigado!`;
         navigator.clipboard.writeText(text);
         setModalConfig({ isOpen: true, title: "Copiado!", message: "Link copiado para a área de transferência.", type: 'success' });
