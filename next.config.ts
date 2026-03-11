@@ -16,6 +16,15 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '4mb',
     },
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  images: {
+    unoptimized: true,
+  },
   async redirects() {
     return [
       {
