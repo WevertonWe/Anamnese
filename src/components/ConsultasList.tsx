@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { getHistory, deleteRecord } from '@/app/actions/history.actions';
+import { getHistory, deleteRecord, markRecordAsRead, updateRecordStatus } from '@/app/actions/history.actions';
 import { getDoctorProfile } from '@/app/actions/profile.actions';
 import Modal from '@/components/ui/Modal';
 import { exportAnamneseToPDF } from '@/lib/exportPdf';
@@ -87,6 +87,12 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
             </div>
         );
 
+        if (!record.isRead) {
+            markRecordAsRead(record.id).then(() => {
+                setRecords(prev => prev.map(r => r.id === record.id ? { ...r, isRead: true } : r));
+            });
+        }
+
         setSelectedRecord(record);
         setModalConfig({
             isOpen: true,
@@ -109,8 +115,16 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
         <div className="w-full space-y-3">
             {records.map(record => (
                 <div key={record.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-slate-300 transition-colors">
-                    <div className="flex-1 mb-3 sm:mb-0">
-                        <h4 className="font-bold text-slate-800">{record.patientName}</h4>
+                    <div className="flex-1 mb-3 sm:mb-0 relative">
+                        <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-slate-800">{record.patientName}</h4>
+                            {!record.isRead && (
+                                <span className="flex h-2 w-2 relative">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                </span>
+                            )}
+                        </div>
                         <div className="flex gap-3 text-xs text-slate-500 mt-1">
                             <span className="flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -119,6 +133,21 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
                             <span className="flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 {new Date(record.date || record.createdAt).toLocaleDateString('pt-BR')}
+                            </span>
+                        </div>
+                        
+                        {/* Progress Bar Amarelo -> Verde */}
+                        <div className="mt-3 flex items-center gap-2 cursor-pointer group" onClick={() => {
+                            const newStatus = record.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
+                            updateRecordStatus(record.id, newStatus).then(() => {
+                                setRecords(prev => prev.map(r => r.id === record.id ? { ...r, status: newStatus } : r));
+                            });
+                        }}>
+                            <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden flex">
+                                <div className={`h-full transition-all duration-500 ease-out ${record.status === 'COMPLETED' ? 'w-full bg-emerald-500' : 'w-1/2 bg-yellow-400'}`}></div>
+                            </div>
+                            <span className="text-[10px] uppercase font-bold text-slate-400 group-hover:text-slate-600 transition">
+                                {record.status === 'COMPLETED' ? 'Finalizado' : 'Pendente'}
                             </span>
                         </div>
                     </div>

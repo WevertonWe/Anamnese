@@ -18,6 +18,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
     const [language, setLanguage] = useState('pt');
     const [signatureImage, setSignatureImage] = useState<string | null>(null);
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
     const [modalConfig, setModalConfig] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'error' | 'info' }>({
@@ -38,6 +39,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                     setLanguage(profile?.language || 'pt');
                     setSignatureImage(profile?.signatureImage ?? null);
                     setLogoUrl(profile?.logoUrl ?? "");
+                    setNotificationsEnabled(profile?.notificationsEnabled ?? true);
                 }
             });
         }
@@ -45,7 +47,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
 
     const handleSave = async () => {
         setIsSaving(true);
-        const res = await saveDoctorProfile({ fullName, crm, specialty, signatureAlign, showLogoText, role: role as any, aiModel, language, signatureImage: signatureImage || undefined, logoUrl: logoUrl || undefined });
+        const res = await saveDoctorProfile({ fullName, crm, specialty, signatureAlign, showLogoText, role: role as any, aiModel, language, signatureImage: signatureImage || undefined, logoUrl: logoUrl || undefined, notificationsEnabled });
         setIsSaving(false);
         if (res.success) {
             document.cookie = `NEXT_LOCALE=${language}; path=/; max-age=31536000`;
@@ -68,6 +70,12 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
             reader.onloadend = () => setter(reader.result as string);
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleTestSound = () => {
+        const audio = new Audio('/app-ping.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(console.error);
     };
 
     if (!isOpen) return null;
@@ -93,7 +101,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                     </div>
 
                     {/* Body Esq */}
-                    <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                    <div className="p-6 space-y-6 overflow-y-auto flex-1 max-h-[85vh]">
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Identidade</h3>
                             <div>
@@ -158,6 +166,31 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                         <hr className="border-slate-100" />
 
                         <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Alertas e Notificações</h3>
+                            
+                            <div className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                <div>
+                                    <h4 className="font-bold text-slate-800">Alertas Sonoros de Novos Pacientes</h4>
+                                    <p className="text-sm text-slate-500">Toque um som quando um novo anamnese for recebido.</p>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <button 
+                                        onClick={handleTestSound}
+                                        className="text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-md transition"
+                                    >
+                                        🔈 Testar Som
+                                    </button>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" className="sr-only peer" checked={notificationsEnabled} onChange={e => setNotificationsEnabled(e.target.checked)} />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr className="border-slate-100" />
+
+                        <div className="space-y-4">
                             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Impressão PDF</h3>
 
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -208,7 +241,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                 </div>
 
                 {/* Lado Direito: Preview */}
-                <div className="hidden md:flex flex-col w-[300px] bg-slate-100 border-l border-slate-200 p-6 flex-shrink-0">
+                <div className="hidden md:flex flex-col w-[350px] bg-slate-100 border-l border-slate-200 p-6 flex-shrink-0">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -219,7 +252,7 @@ export default function SettingsModal({ isOpen, onClose }: { isOpen: boolean, on
                         </button>
                     </div>
 
-                    <div className="flex-1 bg-white shadow-sm border border-slate-200 aspect-[1/1.4] w-full p-4 flex flex-col justify-between text-[10px] leading-tight text-slate-800 relative">
+                    <div className="flex-1 bg-white shadow-2xl border border-gray-200 aspect-[21/29.7] w-[210mm] max-w-full p-8 flex flex-col justify-between text-[10px] leading-tight text-slate-800 relative mx-auto my-auto">
                         <div className="text-center">
                             {logoUrl && <img src={logoUrl} alt="Logo" className="h-6 object-contain mx-auto mb-1" />}
                             {showLogoText && <div className="text-[6px] text-slate-400 absolute top-2 right-2 uppercase">Anamnese Inteligente PWA</div>}

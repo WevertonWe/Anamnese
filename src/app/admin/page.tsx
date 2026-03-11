@@ -44,8 +44,12 @@ export default async function AdminDashboard() {
             </div>
 
             <div className="mt-8">
-                <h2 className="text-lg font-bold text-slate-800 mb-4">Gerenciamento de Médicos</h2>
-                <DoctorsTable />
+                <h2 className="text-lg font-bold text-slate-800 mb-4">Acesso Rápido</h2>
+                <div className="flex gap-4">
+                    <a href="/admin/users" className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold text-sm">
+                        Ir para Gestão de Usuários
+                    </a>
+                </div>
             </div>
         </div>
     );

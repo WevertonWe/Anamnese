@@ -42,7 +42,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                     <Link href="/admin/users" className="px-4 py-2.5 rounded-lg text-slate-300 font-medium hover:bg-slate-800 hover:text-white transition">
                         Gestão de Usuários
                     </Link>
-                    <Link href="/admin/finance" className="px-4 py-2.5 rounded-lg text-slate-300 font-medium hover:bg-slate-800 hover:text-white transition">
+                    <Link href="/admin/financial" className="px-4 py-2.5 rounded-lg text-slate-300 font-medium hover:bg-slate-800 hover:text-white transition">
                         Financeiro (SaaS)
                     </Link>
                 </nav>

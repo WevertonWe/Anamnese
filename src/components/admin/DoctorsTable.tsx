@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getDoctorsList, updateDoctorStatus, updateDoctorSubscription, archiveDoctorProfile } from '@/app/actions/admin.actions';
+import { getDoctorsList, updateDoctorStatus, updateDoctorSubscription, archiveDoctorProfile, permanentDeleteDoctor } from '@/app/actions/admin.actions';
 import Link from 'next/link';
 
 export default function DoctorsTable() {
@@ -14,6 +14,11 @@ export default function DoctorsTable() {
     const [editingDoctor, setEditingDoctor] = useState<any | null>(null);
     const [editValue, setEditValue] = useState("");
     const [editDate, setEditDate] = useState("");
+    
+    // Estados para Exclusão Permanente
+    const [deletingDoctor, setDeletingDoctor] = useState<any | null>(null);
+    const [confirmDeleteText, setConfirmDeleteText] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const loadDoctors = async () => {
         setIsLoading(true);
@@ -54,6 +59,21 @@ export default function DoctorsTable() {
         await updateDoctorSubscription(editingDoctor.id, numValue, dateObj);
         setEditingDoctor(null);
         loadDoctors();
+    };
+
+    const handlePermanentDelete = async () => {
+        if (!deletingDoctor || confirmDeleteText !== 'EXCLUIR') return;
+        setIsDeleting(true);
+        const res = await permanentDeleteDoctor(deletingDoctor.id);
+        setIsDeleting(false);
+        if (res.success) {
+            alert(`Médico removido e ${res.filesDeleted} arquivos apagados.`);
+            setDeletingDoctor(null);
+            setConfirmDeleteText("");
+            loadDoctors();
+        } else {
+            alert("Erro ao excluir: " + res.error);
+        }
     };
 
     const deletedDoctors = doctors.filter(d => d.deletedAt);
@@ -202,12 +222,21 @@ export default function DoctorsTable() {
                                     <td className="p-4">
                                         <div className="flex flex-col xl:flex-row gap-2">
                                             {activeTab === 'EXCLUIDOS' ? (
-                                                <button 
-                                                    onClick={() => handleArchive(doc.id, true)}
-                                                    className="text-xs font-bold px-3 py-1.5 rounded-lg transition-colors border border-emerald-200 text-emerald-600 hover:bg-emerald-50"
-                                                >
-                                                    Restaurar Acesso
-                                                </button>
+                                                <>
+                                                    <button 
+                                                        onClick={() => handleArchive(doc.id, true)}
+                                                        className="text-xs font-bold px-3 py-1.5 rounded-lg transition-colors border border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                                                    >
+                                                        Restaurar Acesso
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => { setDeletingDoctor(doc); setConfirmDeleteText(""); }}
+                                                        className="text-xs font-bold px-3 py-1.5 rounded-lg transition-colors border border-red-200 text-red-600 hover:bg-red-50 flex items-center justify-center"
+                                                        title="Excluir Definitivamente"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    </button>
+                                                </>
                                             ) : (
                                                 <>
                                                     <button 
@@ -286,6 +315,50 @@ export default function DoctorsTable() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Permanent Delete Modal */}
+            {deletingDoctor && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-red-100">
+                        <h3 className="text-xl font-bold text-red-600 mb-2 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            Exclusão Permanente
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-4">
+                            Deseja excluir definitivamente o Dr(a). <strong>{deletingDoctor.fullName}</strong>? Todos os arquivos associados serão removidos.
+                        </p>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Digite EXCLUIR para confirmar</label>
+                                <input 
+                                    type="text" 
+                                    value={confirmDeleteText}
+                                    onChange={e => setConfirmDeleteText(e.target.value)}
+                                    placeholder="EXCLUIR"
+                                    className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 border-red-500 text-slate-800"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4">
+                                <button 
+                                    type="button" 
+                                    onClick={() => { setDeletingDoctor(null); setConfirmDeleteText(""); }}
+                                    className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={handlePermanentDelete}
+                                    disabled={confirmDeleteText !== 'EXCLUIR' || isDeleting}
+                                    className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                                >
+                                    {isDeleting ? 'Excluindo...' : 'Excluir Agora'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

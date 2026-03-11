@@ -203,6 +203,48 @@ export async function createDoctorWithBranding(data: {
     return { 
         success: true, 
         password: generatedPassword, 
-        message: "Médico criado com sucesso e Branding processado." 
     };
+}
+
+export async function permanentDeleteDoctor(id: string) {
+    const adminId = await getLoggedUserId();
+    if (!adminId) throw new Error("Não autorizado");
+
+    const doctor = await prisma.doctorProfile.findUnique({
+        where: { id },
+        select: { logoUrl: true, signatureImage: true }
+    });
+
+    if (!doctor) {
+        return { success: false, error: "Médico não encontrado." };
+    }
+
+    let filesDeleted = 0;
+
+    const deleteFromStorage = async (url: string | null) => {
+        if (!url) return;
+        try {
+            const urlParts = url.split('/');
+            const fileName = urlParts[urlParts.length - 1];
+            const folder = url.includes('/logos/') ? 'logos' : 'signatures';
+            const path = `${folder}/${fileName}`;
+
+            const { error } = await supabase.storage
+                .from('doctors-branding')
+                .remove([path]);
+            
+            if (!error) filesDeleted++;
+        } catch (e) {
+            console.error("Error deleting file:", e);
+        }
+    };
+
+    if (doctor.logoUrl) await deleteFromStorage(doctor.logoUrl);
+    if (doctor.signatureImage) await deleteFromStorage(doctor.signatureImage);
+
+    await prisma.doctorProfile.delete({
+        where: { id }
+    });
+
+    return { success: true, filesDeleted };
 }

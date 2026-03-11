@@ -44,7 +44,8 @@ export async function saveDoctorProfile(data: {
     language?: string,
     avatarUrl?: string | null,
     signatureImage?: string | null,
-    logoUrl?: string | null
+    logoUrl?: string | null,
+    notificationsEnabled?: boolean
 }) {
     try {
         const { getLoggedUserId } = await import('@/app/actions/auth.actions');
@@ -64,7 +65,8 @@ export async function saveDoctorProfile(data: {
                 language: data.language,
                 avatarUrl: data.avatarUrl,
                 signatureImage: (data as any).signatureImage,
-                logoUrl: (data as any).logoUrl
+                logoUrl: (data as any).logoUrl,
+                notificationsEnabled: (data as any).notificationsEnabled
             }
         });
 

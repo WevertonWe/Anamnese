@@ -96,3 +96,29 @@ Conduta Anterior: ${conduta}`;
         return null;
     }
 }
+
+export async function markRecordAsRead(id: string) {
+    try {
+        await prisma.patientRecord.update({
+            where: { id },
+            data: { isRead: true }
+        });
+        revalidatePath('/');
+        return { success: true };
+    } catch (err) {
+        return { success: false };
+    }
+}
+
+export async function updateRecordStatus(id: string, status: string) {
+    try {
+        await prisma.patientRecord.update({
+            where: { id },
+            data: { status }
+        });
+        revalidatePath('/');
+        return { success: true };
+    } catch (err) {
+        return { success: false };
+    }
+}
