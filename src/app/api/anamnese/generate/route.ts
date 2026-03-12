@@ -28,8 +28,6 @@ export async function POST(request: Request) {
       Gere um JSON com os campos correspondentes para preencher a interface.
     `;
 
-        console.log("LLM Prompt Payload Draft:\n", samplePromptSOAP);
-
         // Draft response
         return NextResponse.json({
             success: true,

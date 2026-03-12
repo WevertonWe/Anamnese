@@ -38,7 +38,6 @@ export default function AudioRecorder({ templateId = "mock_1", onResult, minimal
         setAnamnesisResult(null);
 
         try {
-            console.log("--- TRANSCRIÇÃO ENVIADA PARA IA ---", liveTranscription);
 
             // API call to the Server Action that connects to LLM
             const res = await generateAnamnesis({
@@ -46,8 +45,6 @@ export default function AudioRecorder({ templateId = "mock_1", onResult, minimal
                 templateId: templateId,
                 patientName: "Paciente Atual"
             });
-
-            console.log("--- RESULTADO DO MODELO ---", res.success ? res.data : res.error);
 
             if (res.success) {
                 if (onResult) onResult(res.data);
@@ -64,7 +61,7 @@ export default function AudioRecorder({ templateId = "mock_1", onResult, minimal
     };
 
     return (
-        <div className={`flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200 gap-6 w-full ${minimal ? 'max-w-none' : 'max-w-md'} mx-auto`}>
+        <div className={`flex ${minimal ? 'flex-row items-center gap-3' : 'flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200 gap-6 max-w-md'} w-full mx-auto`}>
             {!minimal && (
                 <div className="text-center">
                     <h2 className="text-xl font-semibold text-slate-800">Nova Consulta</h2>
@@ -72,29 +69,29 @@ export default function AudioRecorder({ templateId = "mock_1", onResult, minimal
                 </div>
             )}
 
-            <div className="flex items-center justify-center w-full">
+            <div className={`flex items-center justify-center ${minimal ? '' : 'w-full'}`}>
                 {isRecording ? (
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="relative flex items-center justify-center w-24 h-24">
+                    <div className={`flex ${minimal ? 'flex-row items-center gap-3' : 'flex-col items-center gap-4'}`}>
+                        <div className={`relative flex items-center justify-center ${minimal ? 'w-10 h-10' : 'w-24 h-24'}`}>
                             <div className="absolute inset-0 bg-red-500 rounded-full opacity-20 animate-ping"></div>
                             <div className="absolute inset-0 bg-red-500 rounded-full opacity-40 animate-pulse"></div>
                             <button
                                 onClick={stopRecording}
-                                className="relative z-10 flex items-center justify-center w-16 h-16 bg-red-600 rounded-full shadow-lg hover:bg-red-700 transition"
+                                className={`relative z-10 flex items-center justify-center bg-red-600 rounded-full transition ${minimal ? 'w-10 h-10' : 'w-16 h-16 shadow-lg'}`}
                                 aria-label="Parar gravação"
                             >
-                                <div className="w-6 h-6 bg-white rounded-sm"></div>
+                                <div className={`bg-white rounded-sm ${minimal ? 'w-3.5 h-3.5' : 'w-6 h-6'}`}></div>
                             </button>
                         </div>
-                        <span className="text-lg font-mono text-red-600 font-medium">{formatTime(seconds)}</span>
+                        <span className={`font-mono text-red-600 font-medium ${minimal ? 'text-sm' : 'text-lg'}`}>{formatTime(seconds)}</span>
                     </div>
                 ) : (
                     <button
                         onClick={startRecording}
-                        className="flex flex-col items-center justify-center w-24 h-24 bg-emerald-600 rounded-full shadow-lg hover:bg-emerald-700 transition gap-2 group"
+                        className={`flex items-center justify-center bg-emerald-600 rounded-full hover:bg-emerald-700 transition group ${minimal ? 'w-10 h-10' : 'w-24 h-24 shadow-lg flex-col gap-2'}`}
                         aria-label="Iniciar gravação"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-white group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`text-white group-hover:scale-110 transition-transform ${minimal ? 'w-5 h-5' : 'w-8 h-8'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                         </svg>
                     </button>

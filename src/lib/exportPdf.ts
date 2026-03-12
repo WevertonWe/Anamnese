@@ -88,7 +88,9 @@ export function exportAnamneseToPDF(
     'cid': translations['cid_sugerido'] || (isEn ? 'Suggested ICD-10' : isEs ? 'Diagnóstico Sugerido (CIE-10)' : 'Sugestão de CID-10'),
     'hipotese_diagnostica': translations['hipotese_diagnostica'] || (isEn ? 'Diagnostic Hypothesis' : isEs ? 'Hipótesis Diagnóstica' : 'Hipótese Diagnóstica'),
     'conduta_sugerida': translations['conduta_sugerida'] || (isEn ? 'Suggested Conduct' : isEs ? 'Conducta Sugerida' : 'Conduta Sugerida'),
-    'conduta': translations['conduta_sugerida'] || (isEn ? 'Suggested Conduct' : isEs ? 'Conducta Sugerida' : 'Conduta Sugerida')
+    'conduta': translations['conduta_sugerida'] || (isEn ? 'Suggested Conduct' : isEs ? 'Conducta Sugerida' : 'Conduta Sugerida'),
+    'imc_calculado': isEn ? 'BMI (Calculated)' : isEs ? 'IMC (Calculado)' : 'IMC (Calculado)',
+    'exames_sugeridos': translations['exames_sugeridos'] || (isEn ? 'Suggested Exams' : isEs ? 'Exámenes Sugeridos' : 'Exames Sugeridos'),
   };
 
   if (record.template && typeof record.template.schema === 'string') {
@@ -109,22 +111,34 @@ export function exportAnamneseToPDF(
     }
   }
 
+  const insightFields = ['hipotese_diagnostica', 'conduta_sugerida', 'cid_sugerido', 'cid', 'observacoes_gerais', 'imc_calculado', 'exames_sugeridos'];
   const hiddenFields = ['patient_name_extracted', 'consult_date_extracted'];
 
   const tableBody = Object.entries(record.data)
-    .filter(([key]) => !hiddenFields.includes(key))
+    .filter(([key]) => !hiddenFields.includes(key) && !insightFields.includes(key))
     .map(([key, value]) => {
-      // Tentar traduzir as opções se for multiple choice armazenado como CSV
       let displayValue = String(value);
       if (typeof value === 'string' && value.includes(',') && translations[`${key}-options`]) {
-        const parts = value.split(',').map(s => s.trim());
-        const trParts = translations[`${key}-options`].split(',').map(s => s.trim());
-        // Como não temos mapeamento exato 1:1 chave-valor nas opções, vamos fazer um replace se existir
-        // Mas sem arriscar muito, vamos deixar o valor original
+          // Translation logic placeholder
       }
       const finalLabel = fieldLabels[key] || formatKey(key);
       return [finalLabel, displayValue];
     });
+
+  // 2b. IMC info (if exists) - Prominent but clean text
+  const imcValue = record.data['imc_calculado'];
+  let imcY = currentY + 18;
+  if (imcValue) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`IMC: ${imcValue}`, marginX, currentY + 21);
+      doc.setFont('helvetica', 'normal');
+      imcY = currentY + 26;
+  }
+
+  // Linha Separadora
+  doc.setLineWidth(0.5);
+  doc.line(marginX, imcY, pageWidth - marginX, imcY);
 
   const bodyStylesConfig = mode === 'full' ? {
     font: 'helvetica',
@@ -142,7 +156,7 @@ export function exportAnamneseToPDF(
   const headLabel2 = isEn ? 'Description / Report' : isEs ? 'Descripción / Relato' : 'Descrição / Relato';
 
   autoTable(doc, {
-    startY: currentY + 23,
+    startY: imcY + 5,
     head: [[headLabel1, headLabel2]],
     body: tableBody,
     theme: mode === 'full' ? 'striped' : 'grid',
@@ -160,6 +174,41 @@ export function exportAnamneseToPDF(
     margin: { left: marginX, right: marginX },
     styles: { overflow: 'linebreak' }
   });
+
+  // 3b. Insights section (Hypothesis, Conduct, etc)
+  const insightsData = insightFields
+    .filter(key => key !== 'imc_calculado')
+    .filter(key => record.data[key])
+    .map(key => [fieldLabels[key] || formatKey(key), String(record.data[key])]);
+
+  if (insightsData.length > 0) {
+      const insightsHeadLabel = isEn ? 'Clinical Insights & Conduct' : isEs ? 'Insights y Conducta' : 'Insights Clínicos e Conduta';
+      autoTable(doc, {
+          startY: (doc as any).lastAutoTable.finalY + 10,
+          head: [[insightsHeadLabel, isEn ? 'Details' : isEs ? 'Detalles' : 'Detalhes']],
+          body: insightsData,
+          theme: 'grid',
+          headStyles: {
+              fillColor: [5, 150, 105],
+              textColor: [255, 255, 255],
+              fontStyle: 'bold',
+              font: 'helvetica'
+          },
+          bodyStyles: {
+              font: 'helvetica',
+              textColor: [51, 65, 85],
+              fontSize: 10,
+              cellPadding: 6,
+              fontStyle: 'italic'
+          } as any,
+          columnStyles: {
+              0: { cellWidth: mode === 'full' ? 60 : 50, fontStyle: 'bold' },
+              1: { cellWidth: 'auto' }
+          },
+          margin: { left: marginX, right: marginX},
+          styles: { overflow: 'linebreak' }
+      });
+  }
 
   // 4. Rodapé em todas as páginas
   const pageCount = doc.getNumberOfPages();

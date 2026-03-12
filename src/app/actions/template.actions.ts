@@ -4,7 +4,16 @@ import prisma from '@/lib/prisma';
 
 export async function getTemplates() {
     try {
+        const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+        const doctorId = await getLoggedUserId();
+
         const dbTemplates = await prisma.template.findMany({
+            where: {
+                OR: [
+                    { isDefault: true },
+                    ...(doctorId ? [{ doctorId }] : [])
+                ]
+            },
             orderBy: { createdAt: 'desc' }
         });
 
@@ -21,11 +30,15 @@ export async function getTemplates() {
 
 export async function createTemplate(data: { name: string, description: string, fields: any[], translations?: any }) {
     try {
+        const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+        const doctorId = await getLoggedUserId();
+
         const payload: any = {
             name: data.name,
             description: data.description,
             schema: JSON.stringify({ fields: data.fields }),
-            isDefault: false
+            isDefault: false,
+            doctorId: doctorId || undefined
         };
 
         if (data.translations) {
@@ -44,8 +57,16 @@ export async function createTemplate(data: { name: string, description: string, 
 
 export async function deleteTemplate(id: string) {
     try {
+        const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+        const doctorId = await getLoggedUserId();
+
         const template = await prisma.template.findUnique({ where: { id } });
         if (!template) return { success: false, error: "Template não encontrado." };
+
+        // Guarda de segurança: impedir exclusão de template de outro médico
+        if (template.doctorId && template.doctorId !== doctorId) {
+            return { success: false, error: "Não autorizado." };
+        }
 
         await prisma.template.delete({ where: { id } });
         return { success: true };

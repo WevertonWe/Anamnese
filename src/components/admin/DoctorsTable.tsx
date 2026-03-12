@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getDoctorsList, updateDoctorStatus, updateDoctorSubscription, archiveDoctorProfile, permanentDeleteDoctor } from '@/app/actions/admin.actions';
 import Link from 'next/link';
+import UnifiedModal, { useUnifiedModal } from '@/components/ui/unified-modal';
 
 export default function DoctorsTable() {
     const [doctors, setDoctors] = useState<any[]>([]);
@@ -19,6 +20,12 @@ export default function DoctorsTable() {
     const [deletingDoctor, setDeletingDoctor] = useState<any | null>(null);
     const [confirmDeleteText, setConfirmDeleteText] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Unified Modal
+    const { modalState, showModal, hideModal } = useUnifiedModal();
+
+    // Archive confirm state
+    const [archiveTarget, setArchiveTarget] = useState<{ id: string; isRestore: boolean } | null>(null);
 
     const loadDoctors = async () => {
         setIsLoading(true);
@@ -42,11 +49,18 @@ export default function DoctorsTable() {
     };
 
     const handleArchive = async (id: string, isRestore: boolean) => {
-        if (!isRestore && !confirm("Deseja realmente arquivar este usuário? Ele perderá o acesso imediatamente.")) return;
-        if (isRestore && !confirm("Deseja restaurar este usuário excluído?")) return;
-        
-        await archiveDoctorProfile(id, isRestore);
-        loadDoctors();
+        setArchiveTarget({ id, isRestore });
+        showModal({
+            title: isRestore ? 'Restaurar Usuário' : 'Arquivar Usuário',
+            message: isRestore ? 'Deseja restaurar este usuário excluído?' : 'Deseja realmente arquivar este usuário? Ele perderá o acesso imediatamente.',
+            variant: 'confirm',
+            onConfirm: async () => {
+                hideModal();
+                await archiveDoctorProfile(id, isRestore);
+                loadDoctors();
+                setArchiveTarget(null);
+            }
+        });
     };
 
     const handleSaveSubscription = async (e: React.FormEvent) => {
@@ -67,12 +81,12 @@ export default function DoctorsTable() {
         const res = await permanentDeleteDoctor(deletingDoctor.id);
         setIsDeleting(false);
         if (res.success) {
-            alert(`Médico removido e ${res.filesDeleted} arquivos apagados.`);
+            showModal({ title: 'Excluído', message: `Médico removido e ${res.filesDeleted} arquivos apagados.`, variant: 'success' });
             setDeletingDoctor(null);
             setConfirmDeleteText("");
             loadDoctors();
         } else {
-            alert("Erro ao excluir: " + res.error);
+            showModal({ title: 'Erro', message: 'Erro ao excluir: ' + res.error, variant: 'danger' });
         }
     };
 
@@ -362,6 +376,15 @@ export default function DoctorsTable() {
                     </div>
                 </div>
             )}
+
+            <UnifiedModal
+                isOpen={modalState.isOpen}
+                title={modalState.title}
+                message={modalState.message}
+                variant={modalState.variant}
+                onConfirm={modalState.onConfirm}
+                onClose={hideModal}
+            />
         </div>
     );
 }

@@ -5,7 +5,11 @@ import { revalidatePath } from 'next/cache';
 
 export async function getHistory() {
     try {
+        const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+        const doctorId = await getLoggedUserId();
+
         const records = await prisma.patientRecord.findMany({
+            where: doctorId ? { doctorId } : {},
             orderBy: { createdAt: 'desc' },
             include: { template: true }
         });
@@ -22,6 +26,15 @@ export async function getHistory() {
 
 export async function deleteRecord(id: string) {
     try {
+        const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+        const doctorId = await getLoggedUserId();
+
+        const record = await prisma.patientRecord.findUnique({ where: { id } });
+        if (!record) return { success: false, error: "Registro não encontrado." };
+        if (record.doctorId && record.doctorId !== doctorId) {
+            return { success: false, error: "Não autorizado." };
+        }
+
         await prisma.patientRecord.delete({ where: { id } });
         revalidatePath('/');
         return { success: true };

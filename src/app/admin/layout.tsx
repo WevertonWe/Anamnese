@@ -17,8 +17,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         if (profile) userEmail = profile.email;
     }
 
-    console.log(`AUTH_VERIFY: User: ${userEmail} | AdminList: ${process.env.ADMIN_EMAILS}`);
-
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
             {/* Admin Sidebar */}

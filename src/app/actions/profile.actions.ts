@@ -20,8 +20,6 @@ export async function getDoctorProfile() {
 
         const adminEmails = process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',') : [];
         const isSuperAdmin = profile.role === 'ADMIN' && adminEmails.includes(profile.email);
-        
-        console.log(`DEBUG AUTH: Email logado: ${profile.email} | Emails Permitidos: ${process.env.ADMIN_EMAILS} | isSuperAdmin: ${isSuperAdmin}`);
 
         return {
             ...profile,

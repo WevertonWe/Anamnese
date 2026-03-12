@@ -9,6 +9,7 @@ import { exportAnamneseToPDF } from '@/lib/exportPdf';
 import AudioRecorder from './AudioRecorder';
 import InsightsPreviewModal from './InsightsPreviewModal';
 import Modal from '@/components/ui/Modal';
+import UnifiedModal, { useUnifiedModal } from '@/components/ui/unified-modal';
 import { generateRemoteLink } from '@/app/actions/history.actions';
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -27,6 +28,9 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
     const [isGeneratingLink, setIsGeneratingLink] = useState(false);
     const [generatedLink, setGeneratedLink] = useState('');
     const [isRemoteModalOpen, setIsRemoteModalOpen] = useState(false);
+
+    // Unified Modal
+    const { modalState, showModal, hideModal } = useUnifiedModal();
 
     // Translation Cache Stats
     const [translations, setTranslations] = useState<Record<string, string>>({});
@@ -103,7 +107,7 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
                 exportAnamneseToPDF(res.data, profile, mode, locale, translations);
             } else {
                 console.error("Erro ao salvar", res.error);
-                alert("Falha ao salvar o prontuário.");
+                showModal({ title: 'Erro ao Salvar', message: 'Falha ao salvar o prontuário.', variant: 'danger' });
             }
         } catch (err) {
             console.error(err);
@@ -120,7 +124,7 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
 
     const handleGenerateLink = async () => {
         if (!patientName) {
-            alert("Preencha o Nome do Paciente antes de gerar o link remoto.");
+            showModal({ title: 'Campo Obrigatório', message: 'Preencha o Nome do Paciente antes de gerar o link remoto.', variant: 'info' });
             return;
         }
         setIsGeneratingLink(true);
@@ -128,18 +132,18 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
             const res = await generateRemoteLink(patientName, templateId);
             if (res.success && res.link) {
                 // Shortlink mount & HTTPS enforcement on Prod
-                const origin = window.location.origin.includes('localhost') 
-                    ? window.location.origin 
+                const origin = window.location.origin.includes('localhost')
+                    ? window.location.origin
                     : window.location.origin.replace('http:', 'https:');
-                    
+
                 const shortUrl = `${origin}/a/${res.link.split('/').pop()}`;
                 setGeneratedLink(shortUrl);
             } else {
-                alert(res.error || "Erro na geração do formulário. Tente novamente mais tarde.");
+                showModal({ title: 'Erro', message: res.error || 'Erro na geração do formulário. Tente novamente mais tarde.', variant: 'danger' });
             }
         } catch (err) {
             console.error("Remote Link Gen Error:", err);
-            alert("Sistema ocupado ou erro inexperado. Por favor, tente novamente.");
+            showModal({ title: 'Erro', message: 'Sistema ocupado ou erro inesperado. Por favor, tente novamente.', variant: 'danger' });
         } finally {
             setIsGeneratingLink(false);
         }
@@ -148,7 +152,7 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
     const handleCopyLink = () => {
         const text = `Olá, ${patientName}! Boas-vindas à consulta.\n\nPor favor, preencha sua pré-anamnese pelo link abaixo:\n🔗 ${generatedLink}\n\nObrigado!`;
         navigator.clipboard.writeText(text);
-        alert("Mensagem copiada para a área de transferência!");
+        showModal({ title: 'Copiado!', message: 'Mensagem copiada para a área de transferência!', variant: 'success' });
         setIsRemoteModalOpen(false);
         setGeneratedLink('');
     };
@@ -173,7 +177,7 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
             </div>
 
             {role === 'DOCTOR' && (
-                <div className="mb-6 bg-slate-50 rounded-xl p-4 border border-slate-100">
+                <div className="mb-4 pb-4 border-b border-slate-100">
                     <AudioRecorder templateId={templateId} onResult={handleAiResult} minimal={true} />
                 </div>
             )}
@@ -376,6 +380,14 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
                     )}
                 </div>
             </Modal>
+
+            <UnifiedModal
+                isOpen={modalState.isOpen}
+                title={modalState.title}
+                message={modalState.message}
+                variant={modalState.variant}
+                onClose={hideModal}
+            />
         </div>
     );
 }

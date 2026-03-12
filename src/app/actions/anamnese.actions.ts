@@ -94,9 +94,6 @@ CHAVES ESPERADAS NO JSON OBRIGATÓRIAS:
 ${expectedFormatStr}
 `;
 
-        console.log("--- REQUESTING GEMINI API ---");
-        console.log("User Input:", sanitizedTranscription);
-
         // 4 - Chamada à API Real do Google Gemini
         if (!process.env.GEMINI_API_KEY) {
             throw new Error("A chave GEMINI_API_KEY não foi configurada no ambiente (.env).");
@@ -107,12 +104,9 @@ ${expectedFormatStr}
         let attemptSuccess = false;
 
         const prompt = `Analise a transcrição a seguir e extraia o arquivo JSON esperado:\n\n${sanitizedTranscription}`;
-        console.log("--- TEXTO ENVIADO (PROMPT) ---");
-        console.log(sanitizedTranscription);
 
         // 5 - Tentar processar com os modelos da fila até dar certo
         for (const modelName of fallbackModels) {
-            console.log(`--- TENTANDO MODELO: ${modelName} ---`);
             try {
                 const model = genAI.getGenerativeModel({
                     model: modelName,
@@ -129,10 +123,6 @@ ${expectedFormatStr}
 
                 const result = await model.generateContent(prompt);
                 responseText = result.response.text();
-
-                console.log(`--- SUCESSO NO MODELO: ${modelName} ---`);
-                console.log("--- JSON GERADO PELA IA ---");
-                console.log(responseText);
 
                 attemptSuccess = true;
                 break; // Se funcionou, corta o loop for
@@ -166,8 +156,6 @@ ${expectedFormatStr}
         finalResponse["conduta_sugerida"] = mockAiResponse["conduta_sugerida"] || "";
         finalResponse["patient_name_extracted"] = mockAiResponse["patient_name_extracted"] || "";
         finalResponse["consult_date_extracted"] = mockAiResponse["consult_date_extracted"] || "";
-
-        console.log("✅ Dados da IA interceptados com sucesso e devolvidos para a tela");
 
         // 6 - Retornar dados estruturados para a UI
         return {

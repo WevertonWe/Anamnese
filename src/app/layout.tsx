@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 export const maxDuration = 60; // Configura Vercel para permitir até 60s em todas as rotas filhas
+export const dynamic = "force-dynamic"; // Impede cache compartilhado entre sessões de médicos diferentes
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';

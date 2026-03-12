@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { getHistory, deleteRecord, toggleReadStatus, updateRecordStatus } from '@/app/actions/history.actions';
 import { getDoctorProfile } from '@/app/actions/profile.actions';
 import Modal from '@/components/ui/Modal';
@@ -15,18 +15,6 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
         isOpen: false, title: '', message: '', type: 'info'
     });
     const [selectedRecord, setSelectedRecord] = useState<any>(null);
-    const [exportMenuOpenId, setExportMenuOpenId] = useState<string | null>(null);
-    const exportMenuRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
-                setExportMenuOpenId(null);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
 
     const fetchHistory = async () => {
         setLoading(true);
@@ -68,6 +56,11 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
             });
         }
 
+        const handleExportFromModal = async (mode: 'compact' | 'full') => {
+            const profile = await getDoctorProfile();
+            exportAnamneseToPDF(record, profile, mode);
+        };
+
         const detailsJSX = (
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 mt-4 custom-scrollbar text-left w-full">
                 {Object.entries(record.data).map(([k, v]) => {
@@ -84,6 +77,24 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
                         </div>
                     );
                 })}
+
+                {/* Export Buttons inside modal */}
+                <div className="pt-3 border-t border-slate-200 flex gap-2">
+                    <button
+                        onClick={() => handleExportFromModal('compact')}
+                        className="flex-1 px-4 py-2.5 text-xs font-bold text-white bg-slate-700 hover:bg-slate-800 rounded-lg transition flex items-center justify-center gap-1.5"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        PDF Compacto
+                    </button>
+                    <button
+                        onClick={() => handleExportFromModal('full')}
+                        className="flex-1 px-4 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition flex items-center justify-center gap-1.5"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        PDF Completo
+                    </button>
+                </div>
             </div>
         );
 
@@ -151,43 +162,15 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
                             </span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto relative">
-                        <div className="relative">
-                            <button onClick={() => setExportMenuOpenId(exportMenuOpenId === record.id ? null : record.id)} className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition text-center flex items-center justify-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                {t('export')}
-                            </button>
-                            {exportMenuOpenId === record.id && (
-                                <div ref={exportMenuRef} className="absolute bottom-full right-0 sm:left-0 mb-2 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-10 overflow-hidden text-left animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                    <button
-                                        onClick={async () => {
-                                            setExportMenuOpenId(null);
-                                            const profile = await getDoctorProfile();
-                                            exportAnamneseToPDF(record, profile, 'compact');
-                                        }}
-                                        className="w-full px-4 py-3 text-xs font-medium text-slate-700 hover:bg-slate-50 border-b border-slate-100 flex flex-col items-start"
-                                    >
-                                        <span className="font-bold text-slate-800">{t('compactReport')}</span>
-                                        <span className="text-[10px] text-slate-500 font-normal mt-0.5">{t('compactDesc')}</span>
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            setExportMenuOpenId(null);
-                                            const profile = await getDoctorProfile();
-                                            exportAnamneseToPDF(record, profile, 'full');
-                                        }}
-                                        className="w-full px-4 py-3 text-xs font-medium text-slate-700 hover:bg-slate-50 flex flex-col items-start"
-                                    >
-                                        <span className="font-bold text-slate-800">{t('fullReport')}</span>
-                                        <span className="text-[10px] text-slate-500 font-normal mt-0.5">{t('fullDesc')}</span>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                        <button onClick={() => viewDetails(record)} className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition text-center">
-                            {t('details')}
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button 
+                            onClick={() => viewDetails(record)} 
+                            className="flex-1 sm:flex-none px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition text-center flex items-center justify-center gap-1.5 shadow-sm"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                            Revisar e Exportar
                         </button>
-                        <button onClick={() => confirmDelete(record.id)} className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition text-center">
+                        <button onClick={() => confirmDelete(record.id)} className="flex-1 sm:flex-none px-3 py-2 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition text-center">
                             {t('delete')}
                         </button>
                     </div>
