@@ -73,14 +73,13 @@ export function exportAnamneseToPDF(
   doc.text(`${isEn ? 'Date' : isEs ? 'Fecha' : 'Data'}: ${new Date(dataHistorica).toLocaleDateString(dateLocaleStr)}`, marginX, currentY + 7);
   doc.text(`Template: ${record.template?.name || (isEn ? "Standard" : isEs ? "Padrão" : "Padrão")}`, marginX, currentY + 14);
 
-  // Linha Separadora
-  doc.setLineWidth(0.5);
-  doc.line(marginX, currentY + 18, pageWidth - marginX, currentY + 18);
-
   // Montagem da Tabela com os Dados
+
   const formatKey = (key: string) => {
     return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
+
+  // Título e metadados concluídos acima
 
   const fieldLabels: Record<string, string> = {
     'observacoes_gerais': translations['observacoes_gerais'] || (isEn ? 'General Notes' : isEs ? 'Notas Generales' : 'Observações Gerais'),
@@ -93,6 +92,7 @@ export function exportAnamneseToPDF(
     'exames_sugeridos': translations['exames_sugeridos'] || (isEn ? 'Suggested Exams' : isEs ? 'Exámenes Sugeridos' : 'Exames Sugeridos'),
   };
 
+  // ... (parsing template schema) ...
   if (record.template && typeof record.template.schema === 'string') {
     try {
       const parsed = JSON.parse(record.template.schema);
@@ -118,27 +118,54 @@ export function exportAnamneseToPDF(
     .filter(([key]) => !hiddenFields.includes(key) && !insightFields.includes(key))
     .map(([key, value]) => {
       let displayValue = String(value);
-      if (typeof value === 'string' && value.includes(',') && translations[`${key}-options`]) {
-          // Translation logic placeholder
-      }
       const finalLabel = fieldLabels[key] || formatKey(key);
       return [finalLabel, displayValue];
     });
 
-  // 2b. IMC info (if exists) - Prominent but clean text
-  const imcValue = record.data['imc_calculado'];
+  // 2b. IMC info (if exists) - Premium Alignment
+  const cleanNum = (v: any) => {
+    if (!v) return 0;
+    const c = String(v).replace(/kg/i, '').replace(/cm/i, '').replace(/m/gi, '').replace(',', '.').trim();
+    return parseFloat(c);
+  };
+
+  const findRaw = (regex: RegExp) => {
+    const match = Object.entries(record.data).find(([k]) => regex.test(k));
+    return match ? match[1] : null;
+  };
+
+  const peso = cleanNum(findRaw(/peso/i) || findRaw(/weight/i));
+  const altura = cleanNum(findRaw(/altura/i) || findRaw(/height/i));
+  const imcRaw = record.data['imc_calculado'];
+  
   let imcY = currentY + 18;
-  if (imcValue) {
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`IMC: ${imcValue}`, marginX, currentY + 21);
+  
+  if (imcRaw && peso && altura) {
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      imcY = currentY + 26;
+      doc.setTextColor(51, 65, 85); // Slate 700
+
+      // Split "24.8 - Normal" into parts if possible
+      const parts = String(imcRaw).split(' - ');
+      const val = parts[0] || '';
+      const label = parts[1] ? ` — ${parts[1]}` : '';
+
+      doc.text("IMC: ", marginX, currentY + 22);
+      const prefixWidth = doc.getTextWidth("IMC: ");
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(val, marginX + prefixWidth, currentY + 22);
+      const valWidth = doc.getTextWidth(val);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.text(label, marginX + prefixWidth + valWidth, currentY + 22);
+      
+      doc.setTextColor(0);
+      imcY = currentY + 30; // 10px extra margin-bottom
   }
 
-  // Linha Separadora
-  doc.setLineWidth(0.5);
-  doc.line(marginX, imcY, pageWidth - marginX, imcY);
+  // Removemos a linha separadora bruta aqui conforme solicitado
+
 
   const bodyStylesConfig = mode === 'full' ? {
     font: 'helvetica',

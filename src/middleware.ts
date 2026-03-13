@@ -9,10 +9,12 @@ export function middleware(request: NextRequest) {
     // Proteção de rotas Admin: apenas usuários configurados como ADMIN no BD terão acesso 
     // (ex: Contas de Weverton, Bruno e João deverão usar Role.ADMIN)
     if (path.startsWith('/admin') && role !== 'ADMIN') {
+        console.info(`[Middleware] Redirecionando ADMIN: role=${role}, path=${path}`);
         return NextResponse.redirect(new URL('/', request.url));
     }
 
     if (!role && path === '/') {
+        console.info(`[Middleware] Redirecionando Auth: path=${path}`);
         return NextResponse.redirect(new URL('/login', request.url));
     }
 

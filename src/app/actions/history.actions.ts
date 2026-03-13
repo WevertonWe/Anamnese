@@ -141,9 +141,12 @@ export async function generateRemoteLink(patientName: string, templateId: string
         });
 
         revalidatePath('/');
+        const link = `http://localhost:3000/anamnese/${newRecord.id}`;
+        console.log(`[HistoryAction] Link Remoto Gerado: patient=${patientName}, link=${link}`);
         // Ideal is to use env var for URL, using localhost for request
-        return { success: true, link: `http://localhost:3000/anamnese/${newRecord.id}` };
+        return { success: true, link };
     } catch(e) {
+        console.error(`[HistoryAction] Erro ao gerar link:`, e);
         return { success: false, error: 'Falha ao gerar link remoto' };
     }
 }

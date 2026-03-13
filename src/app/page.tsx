@@ -7,6 +7,7 @@ import ConsultasList from "@/components/ConsultasList";
 import RemoteLinksList from "@/components/RemoteLinksList";
 import HeaderSettings from "@/components/HeaderSettings";
 import ClinicalDashboard from "@/components/ClinicalDashboard";
+import InsightsPreviewModal from "@/components/InsightsPreviewModal";
 import { useTranslations, useLocale } from 'next-intl';
 
 export default function Home() {
@@ -17,8 +18,59 @@ export default function Home() {
   const [refreshHistoryTrigger, setRefreshHistoryTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState<'consults' | 'links'>('consults');
 
+  // Insights Preview State (Shared)
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    record?: any; // Para dados históricos
+    formData?: Record<string, string>; // Para dados recém-preenchidos
+    templateSchema?: any;
+    templateId?: string;
+    patientName?: string;
+    consultDate?: string;
+  }>({});
+
   const handleRecordSaved = () => {
     setRefreshHistoryTrigger(prev => prev + 1);
+  };
+  
+  const handleOpenReview = (data: typeof previewData) => {
+    setPreviewData(data);
+    setShowPreview(true);
+  };
+
+  const handleExport = async (mode: 'compact' | 'full', enrichedData: Record<string, string>) => {
+    const { saveRecord } = await import('@/app/actions/history.actions');
+    const { getDoctorProfile } = await import('@/app/actions/profile.actions');
+    const { exportAnamneseToPDF } = await import('@/lib/exportPdf');
+
+    // Se estivermos revisando um registro existente, talvez queiramos apenas exportar,
+    // mas o plano diz para garantir que o PDF use os dados revisados.
+    // Vamos salvar se houver mudanças ou apenas exportar se for histórico? 
+    // O usuário quer "Revisar e Exportar", então vamos salvar/atualizar.
+    
+    const finalPatientName = previewData.patientName || enrichedData.nome || enrichedData.paciente || enrichedData.identificacao || "Paciente Sem Nome";
+    
+    // Se for record existente, atualizamos (futuro) ou salvamos novo. 
+    // Por enquanto, seguimos a lógica do TemplateForm de salvar novo registro.
+    const res = await saveRecord({
+      patientName: finalPatientName,
+      templateId: previewData.templateId || '',
+      date: previewData.consultDate || new Date().toISOString().split('T')[0],
+      data: enrichedData
+    });
+
+    if (res.success && res.data) {
+      handleRecordSaved();
+      const profile = await getDoctorProfile();
+      exportAnamneseToPDF(res.data, profile, mode, locale);
+      setShowPreview(false);
+    }
+  };
+
+  const handleEmail = (enrichedData: Record<string, string>) => {
+    setShowPreview(false);
+    const bodyText = Object.entries(enrichedData).map(([k, v]) => `${k.toUpperCase()}:\n${v}`).join('\n\n');
+    window.location.href = `mailto:?subject=Relatório Clínico&body=${encodeURIComponent(bodyText)}`;
   };
 
   return (
@@ -38,7 +90,17 @@ export default function Home() {
         <section className="w-full flex border bg-white p-4 rounded-xl shadow-lg border-slate-100 flex-col md:flex-row gap-6 mt-4">
           <div className="flex-[2]">
             <div className="h-full border border-slate-200 rounded-lg bg-slate-50 relative p-6">
-              <TemplateForm templateId={selectedTemplateId} onSaved={handleRecordSaved} />
+              <TemplateForm 
+                templateId={selectedTemplateId} 
+                onSaved={handleRecordSaved}
+                onReviewRequest={(data) => handleOpenReview({
+                  formData: data.formData,
+                  templateSchema: data.templateSchema,
+                  templateId: selectedTemplateId,
+                  patientName: data.patientName,
+                  consultDate: data.consultDate
+                })}
+              />
             </div>
           </div>
 
@@ -68,7 +130,17 @@ export default function Home() {
           </div>
           
           {activeTab === 'consults' ? (
-            <ConsultasList refreshTrigger={refreshHistoryTrigger} />
+            <ConsultasList 
+              refreshTrigger={refreshHistoryTrigger} 
+              onReview={(record) => handleOpenReview({
+                record,
+                formData: record.data,
+                templateSchema: record.template?.schema,
+                templateId: record.templateId,
+                patientName: record.patientName,
+                consultDate: record.date || record.createdAt
+              })}
+            />
           ) : (
             <RemoteLinksList refreshTrigger={refreshHistoryTrigger} />
           )}
@@ -77,6 +149,18 @@ export default function Home() {
         <footer className="mt-8 text-center text-sm text-slate-400">
           {t('footer')}
         </footer>
+
+        <InsightsPreviewModal 
+          isOpen={showPreview}
+          formData={previewData.formData || {}}
+          templateSchema={previewData.templateSchema}
+          templateId={previewData.templateId || ''}
+          patientName={previewData.patientName || ''}
+          consultDate={previewData.consultDate || ''}
+          onExport={handleExport}
+          onEmail={handleEmail}
+          onClose={() => setShowPreview(false)}
+        />
       </main>
     </div>
   );

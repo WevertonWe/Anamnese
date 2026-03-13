@@ -7,7 +7,7 @@ import Modal from '@/components/ui/Modal';
 import { exportAnamneseToPDF } from '@/lib/exportPdf';
 import { useTranslations } from 'next-intl';
 
-export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?: number }) {
+export default function ConsultasList({ refreshTrigger = 0, onReview }: { refreshTrigger?: number, onReview?: (record: any) => void }) {
     const t = useTranslations('ConsultasList');
     const [records, setRecords] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -48,70 +48,13 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
         });
     };
 
-    const viewDetails = (record: any) => {
-        const fieldLabels: Record<string, string> = {};
-        if (record.template?.schema?.fields) {
-            record.template.schema.fields.forEach((field: any) => {
-                fieldLabels[field.id] = field.label || field.id;
-            });
-        }
-
-        const handleExportFromModal = async (mode: 'compact' | 'full') => {
-            const profile = await getDoctorProfile();
-            exportAnamneseToPDF(record, profile, mode);
-        };
-
-        const detailsJSX = (
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 mt-4 custom-scrollbar text-left w-full">
-                {Object.entries(record.data).map(([k, v]) => {
-                    const label = fieldLabels[k] || k.replace(/_/g, ' ');
-                    return (
-                        <div key={k} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0 bg-slate-50 border border-slate-100 p-4 rounded-xl shadow-sm">
-                            <h4 className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                {label}
-                            </h4>
-                            <p className="text-slate-700 font-medium text-sm leading-relaxed whitespace-pre-wrap pl-5 border-l-2 border-slate-200">
-                                {Array.isArray(v) ? v.join(', ') : String(v)}
-                            </p>
-                        </div>
-                    );
-                })}
-
-                {/* Export Buttons inside modal */}
-                <div className="pt-3 border-t border-slate-200 flex gap-2">
-                    <button
-                        onClick={() => handleExportFromModal('compact')}
-                        className="flex-1 px-4 py-2.5 text-xs font-bold text-white bg-slate-700 hover:bg-slate-800 rounded-lg transition flex items-center justify-center gap-1.5"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        PDF Compacto
-                    </button>
-                    <button
-                        onClick={() => handleExportFromModal('full')}
-                        className="flex-1 px-4 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition flex items-center justify-center gap-1.5"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        PDF Completo
-                    </button>
-                </div>
-            </div>
-        );
-
+    const handleReview = (record: any) => {
         if (!record.isRead) {
             toggleReadStatus(record.id).then(() => {
                 setRecords(prev => prev.map(r => r.id === record.id ? { ...r, isRead: true } : r));
             });
         }
-
-        setSelectedRecord(record);
-        setModalConfig({
-            isOpen: true,
-            title: `${t('anamneseOf')}: ${record.patientName}`,
-            message: '',
-            children: detailsJSX,
-            type: 'info'
-        });
+        if (onReview) onReview(record);
     };
 
     if (loading && records.length === 0) {
@@ -164,7 +107,7 @@ export default function ConsultasList({ refreshTrigger = 0 }: { refreshTrigger?:
                     </div>
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                         <button 
-                            onClick={() => viewDetails(record)} 
+                            onClick={() => handleReview(record)} 
                             className="flex-1 sm:flex-none px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition text-center flex items-center justify-center gap-1.5 shadow-sm"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>

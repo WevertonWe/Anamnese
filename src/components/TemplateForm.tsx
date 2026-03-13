@@ -13,7 +13,7 @@ import UnifiedModal, { useUnifiedModal } from '@/components/ui/unified-modal';
 import { generateRemoteLink } from '@/app/actions/history.actions';
 import { useTranslations, useLocale } from 'next-intl';
 
-export default function TemplateForm({ templateId, onSaved }: { templateId: string, onSaved?: () => void }) {
+export default function TemplateForm({ templateId, onSaved, onReviewRequest }: { templateId: string, onSaved?: () => void, onReviewRequest?: (data: any) => void }) {
     const t = useTranslations('TemplateForm');
     const locale = useLocale();
     const [template, setTemplate] = useState<any>(null);
@@ -22,7 +22,6 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
     const [patientName, setPatientName] = useState('');
     const [consultDate, setConsultDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [isSaving, setIsSaving] = useState(false);
-    const [showPreview, setShowPreview] = useState(false);
 
     // Remote Link States
     const [isGeneratingLink, setIsGeneratingLink] = useState(false);
@@ -89,35 +88,18 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
         }
     };
 
-    const handleExport = async (mode: 'compact' | 'full', enrichedData: Record<string, string>) => {
-        setIsSaving(true);
-        setShowPreview(false);
-        try {
-            const finalPatientName = patientName || enrichedData.nome || enrichedData.paciente || enrichedData.identificacao || "Paciente Sem Nome";
-            const res = await saveRecord({
-                patientName: finalPatientName,
-                templateId,
-                date: consultDate,
-                data: enrichedData
+    const handleOpenReview = () => {
+        if (onReviewRequest) {
+            onReviewRequest({
+                formData,
+                templateSchema: template?.schema || {},
+                patientName,
+                consultDate
             });
-
-            if (res.success && res.data) {
-                if (onSaved) onSaved();
-                const profile = await getDoctorProfile();
-                exportAnamneseToPDF(res.data, profile, mode, locale, translations);
-            } else {
-                console.error("Erro ao salvar", res.error);
-                showModal({ title: 'Erro ao Salvar', message: 'Falha ao salvar o prontuário.', variant: 'danger' });
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsSaving(false);
         }
     };
 
     const handleEmail = (enrichedData: Record<string, string>) => {
-        setShowPreview(false);
         const bodyText = Object.entries(enrichedData).map(([k, v]) => `${k.toUpperCase()}:\n${v}`).join('\n\n');
         window.location.href = `mailto:?subject=Relatório Clínico - ${template?.name}&body=${encodeURIComponent(bodyText)}`;
     };
@@ -302,7 +284,7 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
                     Gerar Envio
                 </button>
                 <button
-                    onClick={() => setShowPreview(true)}
+                    onClick={handleOpenReview}
                     disabled={isSaving}
                     className="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm flex items-center gap-2"
                 >
@@ -311,17 +293,7 @@ export default function TemplateForm({ templateId, onSaved }: { templateId: stri
                 </button>
             </div>
 
-            <InsightsPreviewModal
-                isOpen={showPreview}
-                formData={formData}
-                templateSchema={template.schema}
-                templateId={templateId}
-                patientName={patientName || "Paciente"}
-                consultDate={consultDate}
-                onExport={handleExport}
-                onEmail={handleEmail}
-                onClose={() => setShowPreview(false)}
-            />
+
 
             <Modal
                 isOpen={isRemoteModalOpen}
