@@ -11,7 +11,7 @@ interface InsightsPreviewModalProps {
     templateId: string;
     patientName: string;
     consultDate: string;
-    onExport: (mode: 'compact' | 'full', enrichedData: Record<string, string>) => void;
+    onExport: (mode: 'compact' | 'full', enrichedData: Record<string, string>) => void | Promise<void>;
     onEmail: (enrichedData: Record<string, string>) => void;
     onClose: () => void;
 }
@@ -22,6 +22,7 @@ export default function InsightsPreviewModal({
     const t = useTranslations('InsightsModal');
 
     const [isLoading, setIsLoading] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const [hipotese, setHipotese] = useState('');
     const [conduta, setConduta] = useState('');
     const [cidList, setCidList] = useState<string[]>([]);
@@ -141,6 +142,17 @@ export default function InsightsPreviewModal({
             observacoes_gerais: observacoes,
             ...(imcData ? { imc_calculado: `${imcData.value.toFixed(1)} - ${imcData.label}` } : {}),
         };
+    };
+
+    const handleDownloadPDF = async (e: React.MouseEvent, mode: 'compact' | 'full') => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsExporting(true);
+        try {
+            await onExport(mode, getEnrichedData());
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -360,20 +372,30 @@ export default function InsightsPreviewModal({
                             {t('email')}
                         </button>
                         <button
-                            onClick={() => onExport('compact', getEnrichedData())}
-                            disabled={isLoading}
+                            type="button"
+                            onClick={(e) => handleDownloadPDF(e, 'compact')}
+                            disabled={isLoading || isExporting}
                             className="flex-1 sm:flex-none px-6 py-2.5 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                            {t('pdfCompact')}
+                            {isExporting ? (
+                                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            )}
+                            {isExporting ? t('generating') : t('pdfCompact')}
                         </button>
                         <button
-                            onClick={() => onExport('full', getEnrichedData())}
-                            disabled={isLoading}
+                            type="button"
+                            onClick={(e) => handleDownloadPDF(e, 'full')}
+                            disabled={isLoading || isExporting}
                             className="flex-1 sm:flex-none px-8 py-2.5 text-sm font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition flex items-center justify-center gap-2 shadow-emerald-200 shadow-xl disabled:opacity-50"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                            {t('pdfFull')}
+                            {isExporting ? (
+                                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            )}
+                            {isExporting ? t('generating') : t('pdfFull')}
                         </button>
                     </div>
                 </div>

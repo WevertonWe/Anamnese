@@ -39,24 +39,28 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
   };
 
   const handleExport = async (mode: 'compact' | 'full', enrichedData: Record<string, string>) => {
-    const { saveRecord } = await import('@/app/actions/history.actions');
+    const { saveRecord, updatePatientRecord } = await import('@/app/actions/history.actions');
     const { getDoctorProfile } = await import('@/app/actions/profile.actions');
     const { exportAnamneseToPDF } = await import('@/lib/exportPdf');
 
     const finalPatientName = previewData.patientName || enrichedData.nome || enrichedData.paciente || enrichedData.identificacao || "Paciente Sem Nome";
     
-    const res = await saveRecord({
-      patientName: finalPatientName,
-      templateId: previewData.templateId || '',
-      date: previewData.consultDate || new Date().toISOString().split('T')[0],
-      data: enrichedData
-    });
+    let res;
+    if (previewData.record?.id) {
+        res = await updatePatientRecord(previewData.record.id, enrichedData);
+    } else {
+        res = await saveRecord({
+            patientName: finalPatientName,
+            templateId: previewData.templateId || '',
+            date: previewData.consultDate || new Date().toISOString().split('T')[0],
+            data: enrichedData
+        });
+    }
 
     if (res.success && res.data) {
       handleRecordSaved();
       const profile = await getDoctorProfile();
       exportAnamneseToPDF(res.data, profile, mode, locale);
-      setShowPreview(false);
     }
   };
 

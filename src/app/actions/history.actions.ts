@@ -135,7 +135,6 @@ export async function generateRemoteLink(patientName: string, templateId: string
                 templateId,
                 doctorId: doctorId || undefined,
                 status: 'PENDING',
-                isActive: true,
                 data: "{}"
             }
         });
@@ -159,7 +158,7 @@ export async function getRemoteFormDetails(slug: string) {
         });
         if (!record) return null;
         
-        if (record.status === 'PENDING' && record.isActive) {
+        if (record.status === 'PENDING') {
             await prisma.patientRecord.update({
                 where: { id: slug },
                 data: { status: 'OPENED' }
@@ -176,8 +175,7 @@ export async function submitRemoteForm(slug: string, data: any) {
            where: { id: slug },
            data: {
                data: JSON.stringify(data),
-               status: 'COMPLETED',
-               isActive: false
+               status: 'COMPLETED'
            }
        });
        return { success: true };
@@ -194,5 +192,29 @@ export async function updateRecordStatus(id: string, status: string) {
         return { success: true };
     } catch (err) {
         return { success: false };
+    }
+}
+
+export async function updatePatientRecord(id: string, data: any) {
+    try {
+        const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+        const doctorId = await getLoggedUserId();
+
+        const record = await prisma.patientRecord.findUnique({ where: { id } });
+        if (!record || (record.doctorId && record.doctorId !== doctorId)) {
+            return { success: false, error: "Não autorizado." };
+        }
+
+        const updated = await (prisma.patientRecord as any).update({
+            where: { id },
+            data: { data: JSON.stringify(data) },
+            include: { template: true }
+        });
+        
+        revalidatePath('/');
+        return { success: true, data: { ...updated, data: JSON.parse(updated.data) } };
+    } catch (err) {
+        console.error("Erro ao atualizar prontuário:", err);
+        return { success: false, error: "Falha ao atualizar prontuário." };
     }
 }

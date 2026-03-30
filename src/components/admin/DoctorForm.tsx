@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { createDoctorWithBranding } from '@/app/actions/admin.actions';
 import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
@@ -131,7 +132,7 @@ export default function DoctorForm() {
                             >
                                 {logoBase64 ? (
                                     <div className="flex flex-col items-center">
-                                        <img src={logoBase64} alt="Logo" className="h-20 object-contain mb-4" />
+                                        <Image src={logoBase64} alt="Logo" width={160} height={80} className="h-20 w-auto object-contain mb-4" />
                                         <button type="button" onClick={() => setLogoBase64(null)} className="text-xs text-red-600 font-bold hover:underline">Remover Logotipo</button>
                                     </div>
                                 ) : (
@@ -158,7 +159,7 @@ export default function DoctorForm() {
                             >
                                 {signatureBase64 ? (
                                     <div className="flex flex-col items-center">
-                                        <img src={signatureBase64} alt="Signature" className="h-20 object-contain mb-4 drop-shadow-sm" />
+                                        <Image src={signatureBase64} alt="Signature" width={160} height={80} className="h-20 w-auto object-contain mb-4 drop-shadow-sm" />
                                         <button type="button" onClick={() => setSignatureBase64(null)} className="text-xs text-red-600 font-bold hover:underline bg-white px-2 py-1 rounded shadow-sm">Remover Assinatura</button>
                                     </div>
                                 ) : (
