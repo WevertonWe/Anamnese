@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getTemplates } from '@/app/actions/template.actions';
-import { getDoctorProfile } from '@/app/actions/profile.actions';
 import { getUserRole } from '@/app/actions/auth.actions';
 import { saveRecord } from '@/app/actions/history.actions';
 import { exportAnamneseToPDF } from '@/lib/exportPdf';
@@ -13,7 +11,7 @@ import UnifiedModal, { useUnifiedModal } from '@/components/ui/unified-modal';
 import { generateRemoteLink } from '@/app/actions/history.actions';
 import { useTranslations, useLocale } from 'next-intl';
 
-export default function TemplateForm({ templateId, onSaved, onReviewRequest }: { templateId: string, onSaved?: () => void, onReviewRequest?: (data: any) => void }) {
+export default function TemplateForm({ templateId, editId, onSaved, onReviewRequest }: { templateId: string, editId?: string, onSaved?: () => void, onReviewRequest?: (data: any) => void }) {
     const t = useTranslations('TemplateForm');
     const locale = useLocale();
     const [template, setTemplate] = useState<any>(null);
@@ -38,6 +36,7 @@ export default function TemplateForm({ templateId, onSaved, onReviewRequest }: {
     useEffect(() => {
         async function fetchTemplate() {
             setTranslations({});
+            const { getTemplates } = await import('@/app/actions/template.actions');
             const templates = await getTemplates();
             const selected = templates.find((t: any) => String(t.id) === templateId);
             setTemplate(selected);
@@ -288,9 +287,10 @@ export default function TemplateForm({ templateId, onSaved, onReviewRequest }: {
                     disabled={isSaving}
                     className="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm flex items-center gap-2"
                 >
-                    {isSaving ? t('processing') : t('reviewExport')}
+                    {isSaving ? t('processing') : editId ? 'Atualizar Template' : t('reviewExport')}
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                 </button>
+
             </div>
 
 

@@ -1,6 +1,7 @@
 'use server';
 
 import prisma from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
 export async function getTemplates() {
     try {
@@ -17,11 +18,12 @@ export async function getTemplates() {
             orderBy: { createdAt: 'desc' }
         });
 
-        // Parse the SQLite String back into a JSON Object
-        return dbTemplates.map(t => ({
+        const serialized = dbTemplates.map(t => ({
             ...t,
             schema: typeof t.schema === 'string' ? JSON.parse(t.schema) : t.schema
         }));
+
+        return JSON.parse(JSON.stringify(serialized));
     } catch (err) {
         console.error("Erro ao puxar templates do banco:", err);
         return [];
@@ -48,10 +50,46 @@ export async function createTemplate(data: { name: string, description: string, 
         const newTemplate = await prisma.template.create({
             data: payload
         });
-        return { success: true, data: newTemplate };
+        revalidatePath('/');
+        return JSON.parse(JSON.stringify({ success: true, data: newTemplate }));
     } catch (err) {
         console.error("Erro ao criar template:", err);
         return { success: false, error: "Falha ao gravar template no banco." };
+    }
+}
+
+export async function updateTemplate(id: string, data: { name: string, description: string, fields: any[], translations?: any }) {
+    try {
+        const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+        const doctorId = await getLoggedUserId();
+
+        const template = await prisma.template.findUnique({ where: { id } });
+        if (!template) return { success: false, error: "Template não encontrado." };
+
+        if (template.doctorId && template.doctorId !== doctorId) {
+            return { success: false, error: "Não autorizado." };
+        }
+
+        const payload: any = {
+            name: data.name,
+            description: data.description,
+            schema: JSON.stringify({ fields: data.fields }),
+        };
+
+        if (data.translations) {
+            payload.translations = JSON.stringify(data.translations);
+        }
+
+        const updated = await prisma.template.update({
+            where: { id },
+            data: payload
+        });
+
+        revalidatePath('/');
+        return JSON.parse(JSON.stringify({ success: true, data: updated }));
+    } catch (err) {
+        console.error("Erro ao atualizar template:", err);
+        return { success: false, error: "Falha ao atualizar template no banco." };
     }
 }
 
@@ -69,6 +107,7 @@ export async function deleteTemplate(id: string) {
         }
 
         await prisma.template.delete({ where: { id } });
+        revalidatePath('/');
         return { success: true };
     } catch (err) {
         console.error("Erro ao deletar template:", err);

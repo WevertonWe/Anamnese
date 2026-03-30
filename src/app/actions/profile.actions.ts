@@ -1,9 +1,10 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, unstable_noStore } from 'next/cache';
 
 export async function getDoctorProfile() {
+    unstable_noStore();
     try {
         const { getLoggedUserId, logoutUser } = await import('@/app/actions/auth.actions');
         const doctorId = await getLoggedUserId();
@@ -18,8 +19,7 @@ export async function getDoctorProfile() {
             return null;
         }
 
-        const adminEmails = process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',') : [];
-        const isSuperAdmin = profile.role === 'ADMIN' && adminEmails.includes(profile.email);
+        const isSuperAdmin = profile.role === 'ADMIN';
 
         return {
             ...profile,

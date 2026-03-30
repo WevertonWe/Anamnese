@@ -1,27 +1,20 @@
 'use server';
 
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import OpenAI from "openai";
 
 interface GenerateTemplateRequest {
     specialty: string;
 }
 
 export async function generateTemplateStructure(data: GenerateTemplateRequest) {
-    try {
-        const { specialty } = data;
+    const { specialty } = data;
 
-        if (!process.env.GEMINI_API_KEY) {
-            throw new Error("A chave GEMINI_API_KEY não foi configurada.");
-        }
+    // Model Lists
+    const geminiModels = ['gemini-3-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
+    const openaiModels = ['gpt-4o', 'gpt-3.5-turbo'];
 
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const fallbackModels = [
-            'gemini-2.5-flash',
-            'gemini-2.0-flash',
-            'gemini-1.5-flash-latest',
-        ];
-
-        const systemInstruction = `
+    const systemInstruction = `
 Você é um especialista em documentação clínica e estruturação de prontuários médicos.
 A sua função é gerar a estrutura ideal de um formulário de anamnese para uma especialidade médica específica.
 Retorne um JSON contendo o nome sugerido para o template, uma descrição curta, uma lista de campos de formulário (fields) e um objeto de traduções (translations).
@@ -29,21 +22,21 @@ Cada campo deve ter "id" (kebab-case), "label" (Título do campo em PT-BR), e "t
 Se o tipo for "radio" ou "checkbox", você DEVE incluir a propriedade "options" com um array de strings contendo as alternativas de múltipla escolha.
 Obrigatório incluir: Queixa Principal, HMA, História Patológica e Exame Físico. Adapte o restante para ser focado na especialidade solicitada.
 
-As traduções devem ser forncidas no objeto "translations" contendo chaves para "en" (Inglês) e "es" (Espanhol). Cada um desses objetos deve mapear o "id" do campo para a sua tradução. Se houver options, mapeie as traduções na respectiva ordem separadas por vírgula na chave "id-options" ou traduza cada option caso prefira, mas a Action do site usa "id-options".
-Exemplo de translations:
-{
-  "en": { "hda": "History of Present Illness", "dor-options": "Mild, Moderate, Severe" },
-  "es": { "hda": "Historia de la Enfermedad Actual", "dor-options": "Leve, Moderado, Severo" }
-}
+As traduções devem ser fornecidas no objeto "translations" contendo chaves para "en" (Inglês) e "es" (Espanhol). Cada um desses objetos deve mapear o "id" do campo para a sua tradução. Se houver options, mapeie as traduções na respectiva ordem separadas por vírgula na chave "id-options".
 `;
 
-        const prompt = `Gere a estrutura de um formulário de anamnese para a especialidade ou contexto clínico: ${specialty}`;
+    const prompt = `Gere a estrutura de um formulário de anamnese para a especialidade ou contexto clínico: ${specialty}`;
 
-        let responseText = "";
-        let attemptSuccess = false;
+    let lastError: any = null;
 
-        for (const modelName of fallbackModels) {
+    // --- TRY GEMINI FIRST ---
+    if (process.env.GEMINI_API_KEY) {
+        const partialKey = process.env.GEMINI_API_KEY.slice(0, 6) + "..." + process.env.GEMINI_API_KEY.slice(-4);
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+        for (const modelName of geminiModels) {
             try {
+                console.info(`[AI] Attempting Gemini | Model: ${modelName} | Key: ${partialKey}`);
                 const model = genAI.getGenerativeModel({
                     model: modelName,
                     systemInstruction: systemInstruction,
@@ -52,8 +45,8 @@ Exemplo de translations:
                         responseSchema: {
                             type: SchemaType.OBJECT,
                             properties: {
-                                templateName: { type: SchemaType.STRING, description: "Nome curto do template" },
-                                description: { type: SchemaType.STRING, description: "Descrição do propósito do template" },
+                                templateName: { type: SchemaType.STRING },
+                                description: { type: SchemaType.STRING },
                                 fields: {
                                     type: SchemaType.ARRAY,
                                     items: {
@@ -61,20 +54,13 @@ Exemplo de translations:
                                         properties: {
                                             id: { type: SchemaType.STRING },
                                             label: { type: SchemaType.STRING },
-                                            type: { type: SchemaType.STRING, description: "'text', 'textarea', 'radio', 'checkbox' ou 'date'" },
-                                            options: {
-                                                type: SchemaType.ARRAY,
-                                                items: { type: SchemaType.STRING },
-                                                description: "Obrigatório se type for radio ou checkbox"
-                                            }
+                                            type: { type: SchemaType.STRING },
+                                            options: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } }
                                         },
                                         required: ["id", "label", "type"]
                                     }
                                 },
-                                translations: {
-                                    type: SchemaType.STRING,
-                                    description: "Objeto JSON serializado como STRING contendo os dicionários de tradução para 'en' e 'es'."
-                                }
+                                translations: { type: SchemaType.STRING }
                             },
                             required: ["templateName", "description", "fields"]
                         }
@@ -82,31 +68,74 @@ Exemplo de translations:
                 });
 
                 const result = await model.generateContent(prompt);
-                responseText = result.response.text();
-                attemptSuccess = true;
-                break;
-            } catch (err) {
-                console.warn(`[WARN] AI Template generation failed on ${modelName}`);
+                const text = result.response.text();
+                console.info(`🚀 Sistema migrado para a Geração 3 do Gemini. Template gerado com sucesso usando ${modelName}`);
+                return { success: true, data: parseAiResponse(text) };
+
+            } catch (err: any) {
+                lastError = err;
+                const status = err?.status || err?.response?.status;
+                console.warn(`[WARN] Gemini ${modelName} failed. Status: ${status}`);
+                if (status === 401 || status === 403) {
+                    console.error("[CRITICAL] Gemini API Key invalid or restricted.");
+                    break; // Skip other Gemini models if key is bad
+                }
             }
         }
+    }
 
-        if (!attemptSuccess) {
-            throw new Error("Nenhum modelo de IA esteve disponível para gerar o template.");
-        }
+    // --- FALLBACK TO OPENAI ---
+    if (process.env.OPENAI_API_KEY) {
+        const partialKey = process.env.OPENAI_API_KEY.slice(0, 6) + "..." + process.env.OPENAI_API_KEY.slice(-4);
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-        const templateData = JSON.parse(responseText || "{}");
-        if (templateData.translations && typeof templateData.translations === 'string') {
+        for (const modelName of openaiModels) {
             try {
-                templateData.translations = JSON.parse(templateData.translations);
+                console.info(`[AI] Falling back to OpenAI | Model: ${modelName} | Key: ${partialKey}`);
+                const response = await openai.chat.completions.create({
+                    model: modelName,
+                    messages: [
+                        { role: "system", content: systemInstruction },
+                        { role: "user", content: prompt }
+                    ],
+                    response_format: { type: "json_object" }
+                });
+
+                const text = response.choices[0].message.content || "{}";
+                return { success: true, data: parseAiResponse(text) };
+
+            } catch (err: any) {
+                lastError = err;
+                const status = err?.status || err?.response?.status;
+                console.warn(`[WARN] OpenAI ${modelName} failed. Status: ${status}`);
+                if (status === 401) {
+                    console.error("[CRITICAL] OpenAI API Key invalid.");
+                    break;
+                }
+            }
+        }
+    }
+
+    return {
+        success: false,
+        error: "Nenhum modelo de IA disponível (Gemini/OpenAI). Verifique as chaves e limites de cota.",
+        details: lastError?.message
+    };
+}
+
+function parseAiResponse(text: string) {
+    try {
+        const data = JSON.parse(text);
+        if (data.translations && typeof data.translations === 'string') {
+            try {
+                data.translations = JSON.parse(data.translations);
             } catch (e) {
                 console.warn("Could not parse returned translations JSON string");
             }
         }
-
-        return { success: true, data: templateData };
-
-    } catch (error: any) {
-        console.error("Error generating template AI:", error);
-        return { success: false, error: error.message || "Erro desconhecido na geração com IA." };
+        return data;
+    } catch (e) {
+        console.error("AI Response Parse Error:", e);
+        return {};
     }
 }
