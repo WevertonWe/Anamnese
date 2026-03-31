@@ -7,6 +7,7 @@ import ConsultasList from "@/components/ConsultasList";
 import RemoteLinksList from "@/components/RemoteLinksList";
 import HeaderSettings from "@/components/HeaderSettings";
 import ClinicalDashboard from "@/components/ClinicalDashboard";
+import AudioRecorder from "@/components/AudioRecorder";
 import InsightsPreviewModal from "@/components/InsightsPreviewModal";
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -28,6 +29,8 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
     patientName?: string;
     consultDate?: string;
   }>({});
+
+  const [audioAiResult, setAudioAiResult] = useState<any>(null);
 
   const handleRecordSaved = () => {
     setRefreshHistoryTrigger(prev => prev + 1);
@@ -87,8 +90,18 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
         <section className="w-full flex border bg-white p-4 rounded-xl shadow-lg border-slate-100 flex-col md:flex-row gap-6 mt-4">
           <div className="flex-[2]">
             <div className="h-full border border-slate-200 rounded-lg bg-slate-50 relative p-6">
+              {/* Premium AI Audio Card */}
+              <div className="mb-6">
+                <AudioRecorder 
+                  variant="card"
+                  templateFields={initialTemplates.find(t => String(t.id) === selectedTemplateId)?.schema?.fields || []}
+                  onResult={(data) => setAudioAiResult(data)} 
+                />
+              </div>
+
               <TemplateForm 
                 templateId={selectedTemplateId} 
+                incomingAiData={audioAiResult}
                 onSaved={handleRecordSaved}
                 onReviewRequest={(data) => handleOpenReview({
                   formData: data.formData,

@@ -11,7 +11,7 @@ import UnifiedModal, { useUnifiedModal } from '@/components/ui/unified-modal';
 import { generateRemoteLink } from '@/app/actions/history.actions';
 import { useTranslations, useLocale } from 'next-intl';
 
-export default function TemplateForm({ templateId, editId, onSaved, onReviewRequest }: { templateId: string, editId?: string, onSaved?: () => void, onReviewRequest?: (data: any) => void }) {
+export default function TemplateForm({ templateId, incomingAiData, editId, onSaved, onReviewRequest }: { templateId: string, incomingAiData?: any, editId?: string, onSaved?: () => void, onReviewRequest?: (data: any) => void }) {
     const t = useTranslations('TemplateForm');
     const locale = useLocale();
     const [template, setTemplate] = useState<any>(null);
@@ -56,6 +56,12 @@ export default function TemplateForm({ templateId, editId, onSaved, onReviewRequ
         }
         if (templateId) fetchTemplate();
     }, [templateId, locale]);
+
+    useEffect(() => {
+        if (incomingAiData) {
+            handleAiResult(incomingAiData);
+        }
+    }, [incomingAiData]);
 
     useEffect(() => {
         getUserRole().then(r => {
@@ -169,12 +175,6 @@ export default function TemplateForm({ templateId, editId, onSaved, onReviewRequ
                     <p className="text-sm text-slate-500">{template.description}</p>
                 </div>
             </div>
-
-            {role === 'DOCTOR' && (
-                <div className="mb-4 pb-4 border-b border-slate-100">
-                    <AudioRecorder templateFields={fields} onResult={handleAiResult} minimal={true} />
-                </div>
-            )}
 
             <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col">
