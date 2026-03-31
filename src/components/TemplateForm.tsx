@@ -10,6 +10,26 @@ import Modal from '@/components/ui/Modal';
 import UnifiedModal, { useUnifiedModal } from '@/components/ui/unified-modal';
 import { generateRemoteLink } from '@/app/actions/history.actions';
 import { useTranslations, useLocale } from 'next-intl';
+import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
+// Funções utílitarias para o IMC
+const parsePeso = (str: string) => {
+    if (!str) return null;
+    const match = str.replace(',', '.').match(/[\d.]+/);
+    return match ? parseFloat(match[0]) : null;
+};
+const parseAltura = (str: string) => {
+    if (!str) return null;
+    let match = str.replace(',', '.').match(/[\d.]+/);
+    if (!match) return null;
+    let val = parseFloat(match[0]);
+    if (val > 3) val = val / 100; // cm to m
+    return val;
+};
+const calcularIMC = (peso: number | null, altura: number | null) => {
+    if (!peso || !altura) return null;
+    return (peso / (altura * altura)).toFixed(1);
+};
 
 export default function TemplateForm({ templateId, incomingAiData, editId, onSaved, onReviewRequest }: { templateId: string, incomingAiData?: any, editId?: string, onSaved?: () => void, onReviewRequest?: (data: any) => void }) {
     const t = useTranslations('TemplateForm');
@@ -20,6 +40,11 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
     const [patientName, setPatientName] = useState('');
     const [consultDate, setConsultDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Patient History States
+    const [patientHistory, setPatientHistory] = useState<any>(null);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [lastSearchedName, setLastSearchedName] = useState('');
 
     // Remote Link States
     const [isGeneratingLink, setIsGeneratingLink] = useState(false);
@@ -157,6 +182,72 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
         setGeneratedLink('');
     };
 
+    const fetchPatientHistory = async (name: string) => {
+        if (!name || name.length < 3 || name === lastSearchedName) return;
+        
+        setIsLoadingHistory(true);
+        setLastSearchedName(name);
+        try {
+            const { getRecentPatientHistory } = await import('@/app/actions/history.actions');
+            const history = await getRecentPatientHistory(name);
+            setPatientHistory(history);
+        } catch (err) {
+            console.error("Erro ao buscar histórico:", err);
+            setPatientHistory(null);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    };
+
+    const handlePatientNameBlur = () => {
+        fetchPatientHistory(patientName);
+    };
+
+    // Auto-search history when name is long enough and typing stops for 1s
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (patientName && patientName.length >= 3) {
+                fetchPatientHistory(patientName);
+            }
+        }, 1000);
+        return () => clearTimeout(timeoutId);
+    }, [patientName]);
+
+    const importLastData = async () => {
+        if (!patientName) return;
+        try {
+            const { getHistory } = await import('@/app/actions/history.actions');
+            const allRecords = await getHistory();
+            const lastRecord = allRecords.find((r: any) => r.patientName.toLowerCase() === patientName.toLowerCase());
+            
+            if (lastRecord && lastRecord.data) {
+                const dataToImport = typeof lastRecord.data === 'string' ? JSON.parse(lastRecord.data) : lastRecord.data;
+                const merged = { ...formData };
+                
+                // Campos fixos que geralmente passam de uma consulta pra outra
+                const importableKeys = ['alergias', 'medicamentos_em_uso', 'comorbidades', 'hpp', 'habitos'];
+                
+                let importedCount = 0;
+                importableKeys.forEach(k => {
+                    const foundKey = Object.keys(dataToImport).find(key => key.toLowerCase().includes(k) || k.includes(key.toLowerCase()));
+                    if (foundKey && dataToImport[foundKey]) {
+                        merged[foundKey] = dataToImport[foundKey];
+                        importedCount++;
+                    }
+                });
+
+                if (importedCount > 0) {
+                    setFormData(merged);
+                    showModal({ title: 'Sucesso', message: `${importedCount} campos (Alergias, HPP, Meds) importados da última consulta!`, variant: 'success' });
+                } else {
+                    showModal({ title: 'Aviso', message: 'Nenhum campo crônico (Alergias, HPP, etc) encontrado na última consulta.', variant: 'info' });
+                }
+            }
+        } catch(e) {
+            console.error("Erro ao importar base:", e);
+        }
+    };
+
     if (!template) {
         return (
             <div className="w-full h-full flex items-center justify-center p-8 text-slate-400">
@@ -177,15 +268,31 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
             </div>
 
             <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('patientName')}</label>
-                    <input
-                        type="text"
-                        value={patientName}
-                        onChange={e => setPatientName(e.target.value)}
-                        className="w-full border border-slate-200 rounded-2xl p-4 text-slate-900 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-slate-300 font-medium"
-                        placeholder="Ex: Carlos Augusto..."
-                    />
+                <div className="flex flex-col relative">
+                    <div className="flex justify-between items-end mb-2 px-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('patientName')}</label>
+                        {patientHistory && (
+                            <button onClick={importLastData} className="text-[9px] text-emerald-600 bg-emerald-50 hover:bg-emerald-100 font-black uppercase tracking-widest border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1 transition-colors active:scale-95">
+                                ⚡ Puxar Dados Base
+                            </button>
+                        )}
+                    </div>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={patientName}
+                            onChange={e => setPatientName(e.target.value)}
+                            onBlur={handlePatientNameBlur}
+                            className={`w-full border ${patientHistory ? 'border-emerald-300 ring-2 ring-emerald-50' : 'border-slate-200'} rounded-2xl p-4 text-slate-900 bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-slate-300 font-medium`}
+                            placeholder="Ex: Carlos Augusto..."
+                        />
+                        {isLoadingHistory && (
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-slate-200 border-t-primary rounded-full animate-spin"></div>
+                        )}
+                        {patientHistory && !isLoadingHistory && (
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" title="Paciente Recorrente Encontrado!"></div>
+                        )}
+                    </div>
                 </div>
                 <div className="flex flex-col">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('consultDate')}</label>
@@ -198,7 +305,110 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-6 pb-12 pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+            <div className="flex flex-1 overflow-hidden">
+                {/* Lateral Esquerda (Timeline), visível só se houver histórico */}
+                {patientHistory && (
+                    <div className="hidden lg:flex flex-col w-64 pr-6 mr-6 border-r border-slate-100 overflow-y-auto custom-scrollbar">
+                        <div className="sticky top-0 bg-white pt-2 pb-4 z-10">
+                            <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                Histórico Recorrente
+                            </h4>
+                        </div>
+                        <div className="relative border-l-2 border-emerald-100 ml-2 mt-2 space-y-6 pb-6">
+                            {patientHistory.split('---').map((entry: string, idx: number) => {
+                                const lines = entry.trim().split('\n');
+                                const titleLine = lines[0] || '';
+                                const matchDate = titleLine.match(/Consulta em (.*?)\s*\(/);
+                                const date = matchDate ? matchDate[1] : 'Data N/A';
+                                
+                                const contentLines = lines.slice(1).join('\n');
+                                const queixa = contentLines.match(/Queixa Relatada: (.*)/)?.[1] || '';
+                                const hd = contentLines.match(/Hipótese.*?: (.*)/)?.[1] || '';
+
+                                if (!titleLine) return null;
+
+                                return (
+                                    <div key={idx} className="relative pl-6">
+                                        <div className="absolute -left-[5px] top-1 w-2 h-2 bg-emerald-500 rounded-full border-2 border-white shadow-sm ring-2 ring-emerald-100"></div>
+                                        <p className="text-[10px] font-black text-slate-400 mb-1">{date}</p>
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm">
+                                            {hd && <p className="text-xs font-bold text-slate-700 line-clamp-2 leading-tight mb-1">{hd}</p>}
+                                            {queixa ? <p className="text-xs text-slate-500 italic line-clamp-2 leading-tight">"{queixa}"</p> : <p className="text-xs text-slate-400">Sem queixa registrada</p>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        
+                        {/* Gráfico de Evolução (Peso / IMC) */}
+                        {(() => {
+                            const entries = patientHistory.split('---').map((e: string) => e.trim()).filter(Boolean);
+                            const chartData = entries.map((entry: string) => {
+                                const lines = entry.split('\n');
+                                const titleLine = lines[0] || '';
+                                const matchDate = titleLine.match(/Consulta em (.*?)\s*\(/);
+                                const date = matchDate ? matchDate[1] : '';
+                                
+                                const pRow = lines.find((l: string) => l.startsWith('Peso:'));
+                                const aRow = lines.find((l: string) => l.startsWith('Altura:'));
+                                const pesoStr = pRow ? pRow.replace('Peso:', '').trim() : '';
+                                const alturaStr = aRow ? aRow.replace('Altura:', '').trim() : '';
+                                
+                                const pesoNum = parsePeso(pesoStr);
+                                const alturaNum = parseAltura(alturaStr);
+                                const imcNum = calcularIMC(pesoNum, alturaNum);
+
+                                return {
+                                    date,
+                                    peso: pesoNum,
+                                    imc: imcNum
+                                };
+                            }).filter((d: any) => d.peso !== null).reverse(); // Oldest to newest
+
+                            if (chartData.length < 2) return null;
+
+                            return (
+                                <div className="mt-8 ml-2 pr-4">
+                                    <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Evolução Ponderal</h4>
+                                    <div className="h-24 w-full bg-slate-50 border border-slate-100 rounded-xl p-2 pb-0 pt-4">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={chartData}>
+                                                <defs>
+                                                    <linearGradient id="colorPeso" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <XAxis dataKey="date" hide />
+                                                <Tooltip 
+                                                    content={({ active, payload }) => {
+                                                        if (active && payload && payload.length) {
+                                                            const data = payload[0].payload;
+                                                            return (
+                                                                <div className="bg-slate-900 text-white text-[10px] p-2 rounded-lg font-bold shadow-xl border border-white/20">
+                                                                    <p className="text-slate-400 mb-1">{data.date}</p>
+                                                                    <p>Peso: {data.peso} kg</p>
+                                                                    {data.imc && <p className="text-emerald-400 mt-0.5">IMC: {data.imc}</p>}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    }}
+                                                />
+                                                <Area type="monotone" dataKey="peso" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorPeso)" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                    </div>
+                )}
+
+                {/* Container Principal do Formulário */}
+                <div className="flex-1 overflow-y-auto space-y-6 pb-12 pr-2 scrollbar-thin scrollbar-thumb-slate-200 relative">
                 {fields.map((field: any) => {
                     const translatedLabel = translations[field.id] || field.label || field.id;
                     const getTranslatedOption = (optIndex: number, defaultOpt: string) => {
@@ -277,6 +487,7 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
                         </div>
                     );
                 })}
+                </div>
             </div>
 
             <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100 flex-wrap">

@@ -28,6 +28,7 @@ export default function InsightsPreviewModal({
     const [cidList, setCidList] = useState<string[]>([]);
     const [newCid, setNewCid] = useState('');
     const [examesSugeridos, setExamesSugeridos] = useState<string[]>([]);
+    const [prescricao, setPrescricao] = useState('');
     const [observacoes, setObservacoes] = useState(formData['observacoes_gerais'] || '');
 
     // Helper to find values using regex in formData labels or IDs
@@ -98,6 +99,7 @@ export default function InsightsPreviewModal({
             setHipotese(cleanHipotese);
             
             setConduta(formData['conduta_sugerida'] || '');
+            setPrescricao(formData['prescricao_medica'] || '');
             setObservacoes(formData['observacoes_gerais'] || '');
             const existingCid = formData['cid_sugerido'];
             if (existingCid) {
@@ -127,6 +129,7 @@ export default function InsightsPreviewModal({
         if (result.success && result.data) {
             if (result.data.hipotese_diagnostica) setHipotese(result.data.hipotese_diagnostica);
             if (result.data.conduta_sugerida) setConduta(result.data.conduta_sugerida);
+            if (result.data.prescricao) setPrescricao(result.data.prescricao);
             if (result.data.cid_sugerido?.length) setCidList(result.data.cid_sugerido);
             if (result.data.exames_sugeridos?.length) setExamesSugeridos(result.data.exames_sugeridos);
         }
@@ -138,6 +141,7 @@ export default function InsightsPreviewModal({
             ...formData,
             hipotese_diagnostica: hipotese,
             conduta_sugerida: conduta,
+            prescricao_medica: prescricao,
             cid_sugerido: cidList.join(', '),
             observacoes_gerais: observacoes,
             ...(imcData ? { imc_calculado: `${imcData.value.toFixed(1)} - ${imcData.label}` } : {}),
@@ -197,8 +201,10 @@ export default function InsightsPreviewModal({
                     <div className="grid grid-cols-1 lg:grid-cols-2 h-full gap-0 divide-x divide-slate-100">
 
                         {/* Coluna Esquerda: Dados Preenchidos */}
-                        <div className="flex flex-col bg-slate-50/30 border-r border-slate-100 overflow-y-auto p-8 pt-2 custom-scrollbar">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 sticky top-0 bg-transparent pt-4 pb-2 z-10">{t('filledData')}</h3>
+                        <div className="flex flex-col bg-slate-50/30 border-r border-slate-100 max-h-[68vh] xl:max-h-[72vh] overflow-y-auto p-8 pt-2 custom-scrollbar relative">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 sticky top-0 bg-white/80 backdrop-blur-sm pt-4 pb-2 z-10 flex items-center gap-2">
+                                {t('filledData')}
+                            </h3>
                             
                             <div className="space-y-4 pb-8">
                                 {fields.length > 0 ? fields.map(field => {
@@ -331,6 +337,33 @@ export default function InsightsPreviewModal({
                                         />
                                     </div>
 
+                                    {/* Prescrição Médica */}
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center justify-between mb-3 px-1">
+                                            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                                                💊 Prescrição Médica
+                                            </label>
+                                            <button 
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(prescricao);
+                                                }}
+                                                className="text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-700 bg-emerald-100/50 hover:bg-emerald-100 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+                                                title="Copiar para Área de Transferência"
+                                                aria-label="Copiar prescrição médica"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                                Copiar
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            value={prescricao}
+                                            onChange={e => setPrescricao(e.target.value)}
+                                            className="w-full border border-emerald-100 rounded-[2rem] p-6 text-sm text-emerald-900 bg-emerald-50/30 focus:bg-emerald-50 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 outline-none h-40 resize-none transition-all font-medium leading-relaxed shadow-inner placeholder:text-emerald-300"
+                                            placeholder="Ex: 1. Dipirona 500mg - 1cp 6/6h se dor..."
+                                        />
+                                    </div>
+
                                     {/* Exames Sugeridos */}
                                     {examesSugeridos.length > 0 && (
                                         <div className="bg-slate-900 rounded-[2rem] p-6 relative overflow-hidden">
@@ -352,7 +385,7 @@ export default function InsightsPreviewModal({
                                         <textarea
                                             value={observacoes}
                                             onChange={e => setObservacoes(e.target.value)}
-                                            className="w-full border border-slate-100 rounded-2xl p-4 text-xs text-slate-800 italic bg-slate-50 outline-none h-20 resize-none font-medium placeholder:text-slate-400"
+                                            className="w-full border border-slate-100 rounded-2xl p-4 text-xs text-slate-800 italic bg-slate-50 outline-none min-h-[100px] resize-none font-medium placeholder:text-slate-400"
                                             placeholder={t('obsPlaceholder')}
                                         />
                                     </div>

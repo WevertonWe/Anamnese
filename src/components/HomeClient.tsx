@@ -121,7 +121,7 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
             <div className="absolute top-0 left-0 w-full h-1.5 bg-primary/20"></div>
             <div className="p-8">
               {/* Centralized Audio Assistant (Moved from Float to Static) */}
-              <div className="mb-8">
+              <div className="mb-8 p-1 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 shadow-inner">
                 <AudioRecorder 
                   variant="floating"
                   templateFields={initialTemplates.find(t => String(t.id) === selectedTemplateId)?.schema?.fields || []}

@@ -34,8 +34,9 @@ Você é um Assistente Médico Especialista em Diagnóstico Clínico.
 Dada uma anamnese estruturada de um paciente (template: ${templateName}) e seu histórico recente (se disponível), sua função é:
 1. Sugerir códigos CID-10 aplicáveis baseados nos sintomas relatados.
 2. Formular uma Hipótese Diagnóstica concisa e fundamentada (indicando melhora ou piora clínica baseada no histórico).
-3. Sugerir uma Conduta clínica (exames em consultório, prescrições, encaminhamentos).
-4. Sugerir Exames Complementares pertinentes.
+3. Sugerir uma Conduta clínica (exames em consultório, encaminhamentos).
+4. Sugerir uma Prescrição com nome do medicamento, dosagem e posologia padrão. Formate como uma lista numerada.
+5. Sugerir Exames Complementares pertinentes.
 
 Baseie-se SOMENTE nos dados fornecidos. Se não houver informação suficiente, indique "Dados insuficientes para determinar".
 `;
@@ -59,9 +60,10 @@ Baseie-se SOMENTE nos dados fornecidos. Se não houver informação suficiente, 
                                 cid_sugerido: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Códigos CID-10 sugeridos" },
                                 hipotese_diagnostica: { type: SchemaType.STRING, description: "Hipótese diagnóstica baseada nos sintomas" },
                                 conduta_sugerida: { type: SchemaType.STRING, description: "Conduta clínica sugerida" },
+                                prescricao: { type: SchemaType.STRING, description: "Prescrição médica sugerida (medicamento, dosagem, posologia) em lista numerada" },
                                 exames_sugeridos: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Exames complementares sugeridos" }
                             },
-                            required: ["cid_sugerido", "hipotese_diagnostica", "conduta_sugerida", "exames_sugeridos"]
+                            required: ["cid_sugerido", "hipotese_diagnostica", "conduta_sugerida", "prescricao", "exames_sugeridos"]
                         }
                     }
                 });

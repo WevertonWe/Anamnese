@@ -98,11 +98,15 @@ export async function getRecentPatientHistory(patientName: string) {
             const hipotese = (parsedData as any)?.hipotese_diagnostica || '';
             const conduta = (parsedData as any)?.conduta_sugerida || '';
             const queixa = (parsedData as any)?.queixa_principal || '';
+            const peso = (parsedData as any)?.peso || '';
+            const altura = (parsedData as any)?.altura || '';
 
             return `Consulta em ${date} (Formato: ${r.template?.name || 'Geral'}):
 Queixa Relatada: ${queixa}
 Hipótese Anterior: ${hipotese}
-Conduta Anterior: ${conduta}`;
+Conduta Anterior: ${conduta}
+Peso: ${peso}
+Altura: ${altura}`;
         }).join('\n\n---\n\n');
     } catch (err) {
         console.error("Erro ao puxar histórico recente:", err);
