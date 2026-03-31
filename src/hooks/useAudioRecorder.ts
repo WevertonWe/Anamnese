@@ -28,6 +28,13 @@ export function useAudioRecorder(): UseAudioRecorderResult {
     const speechRecognitionRef = useRef<any>(null);
 
     const startRecording = useCallback(async () => {
+        // [SECURITY] HTTPS Check for Audio (prevent 'devices of undefined' crash)
+        if (typeof window !== 'undefined' && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) {
+            const httpsError = new Error("O microfone requer uma conexão segura (HTTPS) para funcionar corretamente.");
+            httpsError.name = "SecurityError";
+            throw httpsError;
+        }
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;

@@ -168,37 +168,37 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
     const fields = template.schema?.fields || [];
 
     return (
-        <div className="flex flex-col h-full w-full relative bg-white">
-            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+        <div className="flex flex-col h-full w-full relative">
+            <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-6">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">{template.name}</h2>
-                    <p className="text-sm text-slate-500">{template.description}</p>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">{template.name}</h2>
+                    <p className="text-sm text-slate-500 font-medium">{template.description}</p>
                 </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col">
-                    <label className="text-sm font-bold text-slate-700 mb-1">{t('patientName')}</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('patientName')}</label>
                     <input
                         type="text"
                         value={patientName}
                         onChange={e => setPatientName(e.target.value)}
-                        className="w-full border border-slate-300 rounded-lg p-3 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                        className="w-full border border-slate-200 rounded-2xl p-4 text-slate-900 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-slate-300 font-medium"
                         placeholder="Ex: Carlos Augusto..."
                     />
                 </div>
                 <div className="flex flex-col">
-                    <label className="text-sm font-bold text-slate-700 mb-1">{t('consultDate')}</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('consultDate')}</label>
                     <input
                         type="date"
                         value={consultDate}
                         onChange={e => setConsultDate(e.target.value)}
-                        className="w-full border border-slate-300 rounded-lg p-3 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                        className="w-full border border-slate-200 rounded-2xl p-4 text-slate-900 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium"
                     />
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 pb-12 pr-2">
+            <div className="flex-1 overflow-y-auto space-y-6 pb-12 pr-2 scrollbar-thin scrollbar-thumb-slate-200">
                 {fields.map((field: any) => {
                     const translatedLabel = translations[field.id] || field.label || field.id;
                     const getTranslatedOption = (optIndex: number, defaultOpt: string) => {
@@ -215,24 +215,25 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
 
                     return (
                         <div key={field.id} className="flex flex-col">
-                            <label className="text-sm font-bold text-slate-700 mb-1">
-                                {translatedLabel} {isTranslating && <span className="text-[10px] text-slate-400 font-normal animate-pulse">(...)</span>}
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                                {translatedLabel} {isTranslating && <span className="text-[8px] text-primary/50 font-black animate-pulse ml-2">(TRADUZINDO)</span>}
                             </label>
                             {field.type === 'textarea' ? (
                                 <textarea
                                     value={formData[field.id] || ''}
                                     onChange={e => handleChange(field.id, e.target.value)}
-                                    className="w-full border border-slate-300 rounded-lg p-3 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none h-24 resize-none"
-                                    placeholder={`${t('describe')} ${translatedLabel}...`}
+                                    className="w-full border border-slate-200 rounded-2xl p-4 text-slate-900 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all h-32 resize-none font-medium placeholder:text-slate-300"
+                                    placeholder={`${t('describe')} ${translatedLabel.toLowerCase()}...`}
                                 />
                             ) : field.type === 'radio' && field.options ? (
-                                <div className="flex gap-4 flex-wrap mt-1">
+                                <div className="flex gap-3 flex-wrap mt-1">
                                     {field.options.map((opt: string, idx: number) => {
                                         const trOpt = getTranslatedOption(idx, opt);
+                                        const isChecked = formData[field.id] === opt;
                                         return (
-                                            <label key={opt} className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100 transition">
-                                                <input type="radio" name={field.id} value={opt} checked={formData[field.id] === opt} onChange={e => handleChange(field.id, e.target.value)} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300" />
-                                                <span className="text-sm font-medium text-slate-700">{trOpt}</span>
+                                            <label key={opt} className={`flex items-center gap-2 cursor-pointer px-4 py-3 rounded-2xl border transition-all ${isChecked ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+                                                <input type="radio" name={field.id} value={opt} checked={isChecked} onChange={e => handleChange(field.id, e.target.value)} className="hidden" />
+                                                <span className="text-xs font-black uppercase tracking-wider">{trOpt}</span>
                                             </label>
                                         );
                                     })}
@@ -244,15 +245,15 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
                                         const currentValues = formData[field.id] ? formData[field.id].split(',').map(s => s.trim()) : [];
                                         const isChecked = currentValues.includes(opt);
                                         return (
-                                            <label key={opt} className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100 transition">
+                                            <label key={opt} className={`flex items-center gap-2 cursor-pointer px-4 py-3 rounded-2xl border transition-all ${isChecked ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
                                                 <input type="checkbox" value={opt} checked={isChecked} onChange={e => {
                                                     if (e.target.checked) {
                                                         handleChange(field.id, [...currentValues, opt].filter(Boolean).join(', '));
                                                     } else {
                                                         handleChange(field.id, currentValues.filter(v => v !== opt).join(', '));
                                                     }
-                                                }} className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-slate-300" />
-                                                <span className="text-sm font-medium text-slate-700">{trOpt}</span>
+                                                }} className="hidden" />
+                                                <span className="text-xs font-black uppercase tracking-wider">{trOpt}</span>
                                             </label>
                                         );
                                     })}
@@ -262,15 +263,15 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
                                     type="date"
                                     value={formData[field.id] || ''}
                                     onChange={e => handleChange(field.id, e.target.value)}
-                                    className="w-full border border-slate-300 rounded-lg p-3 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    className="w-full border border-slate-200 rounded-2xl p-4 text-slate-900 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium"
                                 />
                             ) : (
                                 <input
                                     type={field.type === 'number' ? 'number' : 'text'}
                                     value={formData[field.id] || ''}
                                     onChange={e => handleChange(field.id, e.target.value)}
-                                    className="w-full border border-slate-300 rounded-lg p-3 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                                    placeholder={`${t('inform')} ${translatedLabel}...`}
+                                    className="w-full border border-slate-200 rounded-2xl p-4 text-slate-900 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium placeholder:text-slate-300"
+                                    placeholder={`${t('inform')} ${translatedLabel.toLowerCase()}...`}
                                 />
                             )}
                         </div>
@@ -278,69 +279,63 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
                 })}
             </div>
 
-            <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 flex-wrap">
+            <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100 flex-wrap">
                 <button
                     onClick={() => {
                         setFormData({});
                         setPatientName('');
                         setConsultDate(new Date().toISOString().split('T')[0]);
                     }}
-                    className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition"
+                    className="px-6 py-3 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
                 >
                     {t('clear')}
                 </button>
                 <button
                     onClick={() => setIsRemoteModalOpen(true)}
-                    className="px-4 py-2 text-emerald-700 bg-emerald-50 border border-emerald-100 font-bold hover:bg-emerald-100 rounded-lg transition"
+                    className="px-6 py-3 text-primary bg-primary/10 border border-primary/20 font-black uppercase tracking-widest text-[10px] hover:bg-primary hover:text-white rounded-2xl transition-all shadow-sm active:scale-95"
                 >
-                    Gerar Envio
+                    Gerar Link Remoto
                 </button>
                 <button
                     onClick={handleOpenReview}
                     disabled={isSaving}
-                    className="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm flex items-center gap-2"
+                    className="px-8 py-4 bg-slate-900 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-slate-800 transition-all shadow-xl flex items-center gap-3 active:scale-95 disabled:bg-slate-200"
                 >
                     {isSaving ? t('processing') : editId ? 'Atualizar Template' : t('reviewExport')}
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                 </button>
-
             </div>
-
-
 
             <Modal
                 isOpen={isRemoteModalOpen}
-                title="Gerar Envio Remoto"
-                message="Crie um link seguro para o paciente preencher a anamnese de casa."
+                title="Link Remoto Seguro"
+                message="Aumente a agilidade do atendimento permitindo que o paciente preencha dados previamente."
                 type="info"
                 onClose={() => setIsRemoteModalOpen(false)}
             >
-                <div className="space-y-4">
+                <div className="space-y-6 py-2">
                     {!generatedLink ? (
                         <>
                             <div className="flex flex-col text-left">
-                                <label className="text-sm font-bold text-slate-700 mb-1">Nome do Paciente</label>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome do Paciente</label>
                                 <input
                                     type="text"
                                     value={patientName}
                                     onChange={e => setPatientName(e.target.value)}
-                                    className="w-full border border-slate-300 rounded-lg p-3 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    className="w-full border border-slate-200 rounded-2xl p-4 text-slate-900 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-slate-300 font-medium"
                                     placeholder="Ex: Maria Antonieta..."
                                 />
                             </div>
                             <button
                                 onClick={handleGenerateLink}
                                 disabled={isGeneratingLink || !patientName}
-                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 disabled:bg-slate-300 transition-colors"
+                                className="w-full bg-primary hover:bg-emerald-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 disabled:bg-slate-200 shadow-lg shadow-primary/20 transition-all active:scale-95"
                             >
                                 {isGeneratingLink ? (
-                                    <>
-                                        <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                        Gerando...
-                                    </>
+                                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 ) : (
                                     <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                                         Gerar Link Único
                                     </>
                                 )}
@@ -348,18 +343,18 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
                         </>
                     ) : (
                         <div className="flex flex-col gap-4 text-left">
-                            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                <p className="text-xs text-slate-500 font-bold mb-1 uppercase tracking-wider">Link Gerado (Acesso Único)</p>
-                                <a href={generatedLink} target="_blank" rel="noreferrer" className="text-emerald-600 font-medium break-all text-sm hover:underline">
+                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                <p className="text-[10px] text-slate-400 font-black mb-2 uppercase tracking-widest">Link Ativo</p>
+                                <a href={generatedLink} target="_blank" rel="noreferrer" className="text-primary font-bold break-all text-sm hover:underline">
                                     {generatedLink}
                                 </a>
                             </div>
                             <button
                                 onClick={handleCopyLink}
-                                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition"
+                                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                                Copiar p/ WhatsApp
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                Copiar Mensagem
                             </button>
                         </div>
                     )}

@@ -17,6 +17,7 @@
     "@tailwindcss/postcss": "^4.2.1",
     "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
+    "framer-motion": "^12.38.0",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
     "next": "15.1.11",

@@ -63,7 +63,7 @@ export default function HeaderSettings() {
     };
 
     return (
-        <div className="absolute top-4 right-4 sm:top-8 sm:right-8 flex items-center gap-3 z-30">
+        <div className="absolute top-4 right-4 sm:top-8 sm:right-8 flex items-center gap-3 z-40">
             {profile?.isSuperAdmin && (
                 <Link 
                     href="/admin" 

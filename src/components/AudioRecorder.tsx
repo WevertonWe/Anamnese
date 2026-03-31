@@ -5,15 +5,18 @@ import { useState, useEffect } from 'react';
 import { generateAnamnesis } from '@/app/actions/anamnese.actions';
 import Modal from '@/components/ui/Modal';
 
-export default function AudioRecorder({ templateFields = [], onResult, minimal = false, variant = 'minimal' }: { templateFields?: any[], onResult?: (data: any) => void, minimal?: boolean, variant?: 'minimal' | 'card' }) {
+export default function AudioRecorder({ templateFields = [], onResult, minimal = false, variant = 'minimal', isModalActive = false }: { templateFields?: any[], onResult?: (data: any) => void, minimal?: boolean, variant?: 'minimal' | 'card' | 'floating', isModalActive?: boolean }) {
     const { isRecording, startRecording, stopRecording, audioBlob, resetAudio, liveTranscription } = useAudioRecorder();
     const [seconds, setSeconds] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [anamnesisResult, setAnamnesisResult] = useState<any>(null);
+    const [recordError, setRecordError] = useState<string | null>(null);
     const [modalConfig, setModalConfig] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'error' | 'info' }>({
         isOpen: false, title: '', message: '', type: 'info'
     });
+    const [isExporting, setIsExporting] = useState(false);
+
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -59,10 +62,170 @@ export default function AudioRecorder({ templateFields = [], onResult, minimal =
         }
     };
 
+    // Reinforce visibility hidden via CSS if modal is active
+    const visibilityClasses = isModalActive ? 'hidden opacity-0 pointer-events-none' : '';
+
+    // Floating Sticky Bar View
+    if (variant === 'floating') {
+        return (
+            <div className={`relative w-full transition-all duration-500 ease-in-out ${visibilityClasses}`}>
+                <div className={`glass rounded-2xl shadow-2xl overflow-hidden border border-white/40 ${isExpanded ? 'w-full h-auto' : 'w-full h-16'}`}>
+                    {!isExpanded ? (
+                        <button 
+                            onClick={() => setIsExpanded(true)}
+                            className="w-full h-full lg:px-6 flex items-center justify-center lg:justify-between group transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`w-12 h-12 lg:w-10 lg:h-10 ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-primary'} rounded-2xl lg:rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 transition-colors`}>
+                                    <span className="text-xl">🎙️</span>
+                                </div>
+                                <div className="text-left hidden lg:block">
+                                    <h3 className="text-slate-800 font-bold text-sm leading-tight">
+                                        {isRecording ? "Gravando Consulta..." : "Ouvir Consulta (IA)"}
+                                    </h3>
+                                    {isRecording && <p className="text-red-500 text-[10px] font-bold uppercase animate-pulse">{formatTime(seconds)}</p>}
+                                </div>
+                            </div>
+
+                            <div className="hidden lg:flex items-center gap-4">
+                                {isRecording && (
+                                    <div className="flex items-center gap-1 h-4">
+                                        {[...Array(6)].map((_, i) => (
+                                            <div key={i} className="w-1 bg-emerald-400 rounded-full animate-wave h-full" style={{ animationDelay: `${i * 0.1}s` }}></div>
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="bg-primary/10 text-primary text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest border border-primary/20">Assistente</div>
+                            </div>
+                        </button>
+                    ) : (
+                        <div className="w-full animate-in zoom-in-98 duration-300">
+                            <div className="bg-slate-900/90 backdrop-blur-md p-4 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl">🎙️</span>
+                                    <span className="text-white font-bold text-sm">Assistente Clínico</span>
+                                </div>
+                                <button 
+                                    onClick={() => setIsExpanded(false)}
+                                    className="text-slate-400 hover:text-white transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="p-6 flex flex-col items-center gap-6 bg-white/50">
+                                <div className="flex flex-col items-center justify-center w-full min-h-[140px] relative">
+                                    {isRecording ? (
+                                        <div className="flex flex-col items-center gap-6 w-full">
+                                            <div className="flex items-end gap-1.5 h-16 mb-2">
+                                                {[...Array(16)].map((_, i) => (
+                                                    <div 
+                                                        key={i} 
+                                                        className="w-1.5 bg-primary rounded-full animate-wave" 
+                                                        style={{ 
+                                                            height: `${30 + Math.random() * 70}%`,
+                                                            animationDelay: `${i * 0.05}s`
+                                                        }}
+                                                    ></div>
+                                                ))}
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-4">
+                                                <button
+                                                    onClick={stopRecording}
+                                                    className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center shadow-lg transition hover:bg-red-700 hover:scale-105 active:scale-95"
+                                                >
+                                                    <div className="w-5 h-5 bg-white rounded-sm"></div>
+                                                </button>
+                                                <span className="font-mono text-3xl text-slate-800 font-black">{formatTime(seconds)}</span>
+                                            </div>
+                                        </div>
+                                    ) : !audioBlob ? (
+                                        <div className="flex flex-col items-center gap-4 py-4">
+                                            <button
+                                                onClick={async () => {
+                                                    setRecordError(null);
+                                                    try {
+                                                        await startRecording();
+                                                    } catch (err: any) {
+                                                        setRecordError(err.message || "Erro no microfone.");
+                                                    }
+                                                }}
+                                                className="w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 transition hover:bg-emerald-600 hover:scale-105 active:scale-95 group"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                                </svg>
+                                            </button>
+                                            <p className="text-slate-500 font-bold text-sm tracking-tight">Iniciar Conversa</p>
+                                        </div>
+                                    ) : (
+                                        <div className="w-full flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4">
+                                            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white shadow-sm">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-800">Processar Clínico</p>
+                                                        <p className="text-[10px] text-primary font-black uppercase tracking-widest">Pronto para IA</p>
+                                                    </div>
+                                                </div>
+                                                <button onClick={resetAudio} className="text-slate-400 hover:text-red-500 p-2 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+
+                                            <button
+                                                onClick={handleTranscribe}
+                                                disabled={isProcessing}
+                                                className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl transition hover:bg-slate-800 disabled:bg-slate-200"
+                                            >
+                                                {isProcessing ? (
+                                                    <svg className="animate-spin h-5 w-5 text-primary" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                ) : (
+                                                    <>✨ Extrair Anamnese</>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {isRecording && liveTranscription && (
+                                    <div className="w-full h-12 bg-white/30 rounded-xl px-4 flex items-center text-xs text-slate-600 italic line-clamp-1 overflow-hidden">
+                                        "{liveTranscription}..."
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                
+                {/* Global Wave Animation Style */}
+                <style jsx>{`
+                    @keyframes wave {
+                        0%, 100% { transform: scaleY(0.3); }
+                        50% { transform: scaleY(1); }
+                    }
+                    .animate-wave {
+                        transform-origin: bottom;
+                        animation: wave 1s ease-in-out infinite;
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
     // Card View
     if (variant === 'card') {
         return (
-            <div className={`w-full transition-all duration-500 ease-in-out ${isExpanded ? 'mb-8' : 'mb-4'}`}>
+            <div className={`w-full transition-all duration-500 ease-in-out ${isExpanded ? 'mb-8' : 'mb-4'} ${visibilityClasses}`}>
                 {!isExpanded ? (
                     <button 
                         onClick={() => setIsExpanded(true)}
@@ -152,13 +315,32 @@ export default function AudioRecorder({ templateFields = [], onResult, minimal =
                                             <p className="text-[10px] text-slate-400 uppercase tracking-tighter">O áudio não é salvo, apenas processado</p>
                                         </div>
                                         <button
-                                            onClick={startRecording}
+                                            onClick={async () => {
+                                                setRecordError(null);
+                                                try {
+                                                    await startRecording();
+                                                } catch (err: any) {
+                                                    setRecordError(err.message || "Não foi possível acessar o microfone.");
+                                                }
+                                            }}
                                             className="w-20 h-20 bg-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-emerald-600/30 transition hover:bg-emerald-700 hover:scale-105 active:scale-95 group"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-white group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                                             </svg>
                                         </button>
+
+                                        {recordError && (
+                                            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-medium text-center animate-in fade-in slide-in-from-top-2">
+                                                <div className="flex items-center justify-center gap-1 mb-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                    </svg>
+                                                    <span className="font-bold">Erro de Acesso</span>
+                                                </div>
+                                                {recordError}
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="w-full flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4">
@@ -229,7 +411,7 @@ export default function AudioRecorder({ templateFields = [], onResult, minimal =
 
     // Original Minimal Logic
     return (
-        <div className={`flex ${minimal ? 'flex-row items-center gap-3' : 'flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200 gap-6 max-w-md'} w-full mx-auto`}>
+        <div className={`flex ${minimal ? 'flex-row items-center gap-3' : 'flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200 gap-6 max-w-md'} w-full mx-auto ${visibilityClasses}`}>
             {!minimal && (
                 <div className="text-center">
                     <h2 className="text-xl font-semibold text-slate-800">Nova Consulta</h2>
