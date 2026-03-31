@@ -8,8 +8,8 @@ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
  */
 interface GenerateAnamnesisRequest {
     transcription: string;
-    templateId: string;
-    patientName: string;
+    templateFields: { id: string; label: string; type: string }[];
+    patientName?: string;
 }
 
 /**
@@ -18,7 +18,7 @@ interface GenerateAnamnesisRequest {
  */
 export async function generateAnamnesis(data: GenerateAnamnesisRequest) {
     try {
-        const { transcription, templateId, patientName } = data;
+        const { transcription, templateFields, patientName } = data;
 
         // 1 - Validação e Security Audit (Dados de saúde)
         const sanitizedTranscription = patientName
@@ -34,24 +34,13 @@ export async function generateAnamnesis(data: GenerateAnamnesisRequest) {
             'gemini-pro-latest'
         ];
 
-        // 2 - Resgatar o template escolhido do DB Prisma
-        const template = await prisma.template.findUnique({ where: { id: templateId } });
-
-        if (!template || !template.schema) {
-            throw new Error("Template de anamnese não encontrado no banco de dados.");
-        }
-
-        const templateSchema: any = typeof template.schema === 'string'
-            ? JSON.parse(template.schema)
-            : template.schema;
-
         const dynamicProperties: Record<string, any> = {};
         const requiredFields: string[] = [];
         let expectedFormatStr = "";
 
         const sanitizeKey = (k: string) => k.replace(/[^a-zA-Z0-9_]/g, '_');
 
-        templateSchema.fields.forEach((field: any) => {
+        templateFields.forEach((field: any) => {
             const safeKey = sanitizeKey(field.id);
             dynamicProperties[safeKey] = { type: SchemaType.STRING, description: field.label || '' };
             requiredFields.push(safeKey);
@@ -103,7 +92,16 @@ ${expectedFormatStr}
         let responseText = "";
         let attemptSuccess = false;
 
-        const prompt = `Analise a transcrição a seguir e extraia o arquivo JSON esperado:\n\n${sanitizedTranscription}`;
+        const prompt = `Baseado na transcrição da consulta:
+${sanitizedTranscription}
+
+Preencha os campos deste template específico:
+${JSON.stringify(templateFields)}
+
+Regras:
+1. Use EXATAMENTE os IDs fornecidos no templateFields como chaves do JSON.
+2. Se uma informação não for mencionada, deixe o campo vazio.
+3. Retorne apenas o objeto JSON formatado.`;
 
         // 5 - Tentar processar com os modelos da fila até dar certo
         for (const modelName of fallbackModels) {
@@ -148,7 +146,7 @@ ${expectedFormatStr}
 
         // Fazer map reverso pro ID original do formulário
         const finalResponse: Record<string, any> = {};
-        templateSchema.fields.forEach((field: any) => {
+        templateFields.forEach((field: any) => {
             finalResponse[field.id] = mockAiResponse[sanitizeKey(field.id)] || mockAiResponse[field.id] || "";
         });
         finalResponse["cid_sugerido"] = mockAiResponse["cid_sugerido"] || [];

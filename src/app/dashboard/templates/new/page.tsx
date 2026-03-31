@@ -108,7 +108,6 @@ export default function TemplateEditor() {
                             />
                             <div className="w-full sm:w-auto h-10 flex items-center bg-white rounded-lg px-2 border border-emerald-200">
                                 <AudioRecorder
-                                    templateId="system"
                                     minimal={true}
                                     onResult={(data: any) => handleGenerateAI(data.texto_bruto || 'Clínico Geral')}
                                 />

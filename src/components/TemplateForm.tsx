@@ -70,17 +70,30 @@ export default function TemplateForm({ templateId, editId, onSaved, onReviewRequ
     const handleAiResult = (data: any) => {
         if (data && typeof data === 'object') {
             const merged = { ...formData };
-            if (data.patient_name_extracted) setPatientName(data.patient_name_extracted);
+            if (data.patient_name_extracted && !patientName) setPatientName(data.patient_name_extracted);
+            
             if (data.consult_date_extracted) {
-                const d = new Date(data.consult_date_extracted);
-                if (!isNaN(d.getTime())) setConsultDate(data.consult_date_extracted);
+                const currentDateStr = new Date().toISOString().split('T')[0];
+                if (consultDate === currentDateStr || !consultDate) {
+                    const d = new Date(data.consult_date_extracted);
+                    if (!isNaN(d.getTime())) setConsultDate(data.consult_date_extracted);
+                }
             }
+            
             for (const key of Object.keys(data)) {
                 if (key === 'patient_name_extracted' || key === 'consult_date_extracted') continue;
-                if (Array.isArray(data[key])) {
-                    merged[key] = data[key].join(', ');
-                } else if (typeof data[key] === 'string') {
-                    merged[key] = data[key];
+                
+                const incomingValue = Array.isArray(data[key]) ? data[key].filter(Boolean).join(', ') : (typeof data[key] === 'string' ? data[key].trim() : '');
+                
+                if (incomingValue) {
+                    if (merged[key]) {
+                        if (!merged[key].includes(incomingValue)) {
+                            // Merge manual e IA
+                            merged[key] = merged[key] + '\n' + incomingValue;
+                        }
+                    } else {
+                        merged[key] = incomingValue;
+                    }
                 }
             }
             setFormData(merged);
@@ -159,7 +172,7 @@ export default function TemplateForm({ templateId, editId, onSaved, onReviewRequ
 
             {role === 'DOCTOR' && (
                 <div className="mb-4 pb-4 border-b border-slate-100">
-                    <AudioRecorder templateId={templateId} onResult={handleAiResult} minimal={true} />
+                    <AudioRecorder templateFields={fields} onResult={handleAiResult} minimal={true} />
                 </div>
             )}
 

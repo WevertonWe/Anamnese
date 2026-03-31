@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { generateAnamnesis } from '@/app/actions/anamnese.actions';
 import Modal from '@/components/ui/Modal';
 
-export default function AudioRecorder({ templateId = "mock_1", onResult, minimal = false }: { templateId?: string, onResult?: (data: any) => void, minimal?: boolean }) {
+export default function AudioRecorder({ templateFields = [], onResult, minimal = false }: { templateFields?: any[], onResult?: (data: any) => void, minimal?: boolean }) {
     const { isRecording, startRecording, stopRecording, audioBlob, resetAudio, liveTranscription } = useAudioRecorder();
     const [seconds, setSeconds] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -39,10 +39,9 @@ export default function AudioRecorder({ templateId = "mock_1", onResult, minimal
 
         try {
 
-            // API call to the Server Action that connects to LLM
             const res = await generateAnamnesis({
                 transcription: liveTranscription || "(Áudio capturado sem transcrição em texto)",
-                templateId: templateId,
+                templateFields: templateFields,
                 patientName: "Paciente Atual"
             });
 
