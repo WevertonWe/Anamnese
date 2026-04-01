@@ -18,7 +18,8 @@ export default function DoctorForm() {
         specialty: '',
         email: '',
         subscriptionValue: 0,
-        subscriptionExpiresAt: ''
+        subscriptionExpiresAt: '',
+        plan: 'NORMAL' as 'NORMAL' | 'PREMIUM'
     });
 
     const [logoBase64, setLogoBase64] = useState<string | null>(null);
@@ -113,6 +114,17 @@ export default function DoctorForm() {
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2">Data de Vencimento</label>
                         <input type="date" value={form.subscriptionExpiresAt} onChange={e => setForm({...form, subscriptionExpiresAt: e.target.value})} className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 outline-none text-slate-900" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Plano Inicial</label>
+                        <select 
+                            value={form.plan} 
+                            onChange={e => setForm({...form, plan: e.target.value as any})} 
+                            className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 outline-none bg-white font-medium"
+                        >
+                            <option value="NORMAL">Normal</option>
+                            <option value="PREMIUM">Premium</option>
+                        </select>
                     </div>
                 </div>
 

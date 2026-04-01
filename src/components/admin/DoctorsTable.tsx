@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getDoctorsList, updateDoctorStatus, updateDoctorSubscription, archiveDoctorProfile, permanentDeleteDoctor } from '@/app/actions/admin.actions';
+import { getDoctorsList, updateDoctorStatus, updateDoctorSubscription, archiveDoctorProfile, permanentDeleteDoctor, updateUserPlan, updateUserRole, toggleUserStatus } from '@/app/actions/admin.actions';
 import Link from 'next/link';
 import UnifiedModal, { useUnifiedModal } from '@/components/ui/unified-modal';
 
@@ -11,6 +11,12 @@ export default function DoctorsTable() {
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'ATIVOS' | 'EXCLUIDOS'>('ATIVOS');
+
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const showToast = (message: string) => {
+        setToastMessage(message);
+        setTimeout(() => setToastMessage(null), 3000);
+    };
 
     const [editingDoctor, setEditingDoctor] = useState<any | null>(null);
     const [editValue, setEditValue] = useState("");
@@ -43,9 +49,33 @@ export default function DoctorsTable() {
     }, [search, statusFilter]);
 
     const toggleStatus = async (id: string, currentStatus: string) => {
-        const newStatus = currentStatus === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
-        await updateDoctorStatus(id, newStatus);
-        loadDoctors();
+        const res = await toggleUserStatus(id);
+        if (res.error) {
+            showModal({ title: 'Erro', message: res.error, variant: 'danger' });
+        } else {
+            showToast(`Status de acesso alterado com sucesso!`);
+            loadDoctors();
+        }
+    };
+
+    const handlePlanChange = async (doc: any, plan: 'NORMAL' | 'PREMIUM' | 'ADMIN') => {
+        const res = await updateUserPlan(doc.id, plan);
+        if (res.success) {
+            showToast(`Plano de ${doc.fullName} atualizado para ${plan} com sucesso!`);
+            loadDoctors();
+        } else {
+            showModal({ title: 'Erro', message: res.error || 'Erro', variant: 'danger' });
+        }
+    };
+
+    const handleRoleChange = async (doc: any, role: 'DOCTOR' | 'ADMIN') => {
+        const res = await updateUserRole(doc.id, role);
+        if (res.success) {
+            showToast(`Acesso de ${doc.fullName} atualizado para ${role} com sucesso!`);
+            loadDoctors();
+        } else {
+            showModal({ title: 'Erro', message: res.error || 'Erro', variant: 'danger' });
+        }
     };
 
     const handleArchive = async (id: string, isRestore: boolean) => {
@@ -150,17 +180,18 @@ export default function DoctorsTable() {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-50 text-slate-500 text-sm uppercase tracking-wider">
-                            <th className="p-4 font-semibold border-b border-slate-100">Médico</th>
-                            <th className="p-4 font-semibold border-b border-slate-100">Status</th>
+                            <th className="p-4 font-semibold border-b border-slate-100 w-1/4">Médico</th>
+                            <th className="py-4 font-semibold border-b border-slate-100 w-[12%]">Plano</th>
+                            <th className="py-4 font-semibold border-b border-slate-100 w-[13%]">Status</th>
                             {activeTab === 'ATIVOS' ? (
                                 <>
-                                    <th className="p-4 font-semibold border-b border-slate-100">Assinatura</th>
-                                    <th className="p-4 font-semibold border-b border-slate-100">Último Acesso</th>
+                                    <th className="p-4 font-semibold border-b border-slate-100 w-[15%]">Assinatura</th>
+                                    <th className="p-4 font-semibold border-b border-slate-100 w-[15%]">Último Acesso</th>
                                 </>
                             ) : (
-                                <th className="p-4 font-semibold border-b border-slate-100">Lixeira (Countdown)</th>
+                                <th className="p-4 font-semibold border-b border-slate-100 w-[30%]">Lixeira (Countdown)</th>
                             )}
-                            <th className="p-4 font-semibold border-b border-slate-100">Ações</th>
+                            <th className="pl-2 pr-4 py-4 font-semibold border-b border-slate-100 w-[20%] text-right">Ações</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -190,11 +221,20 @@ export default function DoctorsTable() {
                             return (
                                 <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="p-4">
-                                        <div className="font-bold text-slate-800">{doc.fullName}</div>
-                                        <div className="text-sm text-slate-500">{doc.email}</div>
+                                        <div className="font-bold text-slate-800 whitespace-nowrap">{doc.fullName}</div>
+                                        <div className="text-sm text-slate-500 break-words">{doc.email}</div>
                                         <div className="text-xs text-slate-400 mt-1">CRM: {doc.crm || 'N/A'}</div>
                                     </td>
-                                    <td className="p-4">
+                                    <td className="py-4 align-top pt-5">
+                                        {doc.role === 'ADMIN' || doc.plan === 'ADMIN' ? (
+                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">ADMIN</span>
+                                        ) : doc.plan === 'PREMIUM' ? (
+                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">PREMIUM</span>
+                                        ) : (
+                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">NORMAL</span>
+                                        )}
+                                    </td>
+                                    <td className="py-4 align-top pt-5">
                                         {doc.deletedAt ? (
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800">
                                                 ARQUIVADO
@@ -233,8 +273,8 @@ export default function DoctorsTable() {
                                         </td>
                                     )}
 
-                                    <td className="p-4">
-                                        <div className="flex flex-col xl:flex-row gap-2">
+                                    <td className="pl-2 pr-4 py-4">
+                                        <div className="flex flex-col xl:flex-row gap-2 justify-end">
                                             {activeTab === 'EXCLUIDOS' ? (
                                                 <>
                                                     <button 
@@ -259,16 +299,39 @@ export default function DoctorsTable() {
                                                     >
                                                         {doc.status === 'ACTIVE' ? 'Bloquear' : 'Desbloquear'}
                                                     </button>
-                                                    <button 
-                                                        onClick={() => {
-                                                            setEditingDoctor(doc);
-                                                            setEditValue(doc.subscriptionValue ? Number(doc.subscriptionValue).toString() : "0");
-                                                            setEditDate(doc.subscriptionExpiresAt ? new Date(doc.subscriptionExpiresAt).toISOString().split('T')[0] : "");
-                                                        }}
-                                                        className="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors"
-                                                    >
-                                                        Renovar
-                                                    </button>
+                                                    <div className="relative group">
+                                                        <button className="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors flex items-center gap-1">
+                                                            Gerenciar Plano ▼
+                                                        </button>
+                                                        <div className="absolute top-full right-0 mt-1 hidden group-hover:flex flex-col bg-white border border-slate-200 rounded-lg shadow-xl z-20 p-1 min-w-[170px]">
+                                                            <button 
+                                                                onClick={() => handlePlanChange(doc, 'NORMAL')}
+                                                                className="text-left px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 rounded"
+                                                            >Plano Normal</button>
+                                                            <button 
+                                                                onClick={() => handlePlanChange(doc, 'PREMIUM')}
+                                                                className="text-left px-3 py-2 text-xs font-bold text-amber-600 hover:bg-amber-50 rounded"
+                                                            >Plano Premium</button>
+                                                            <div className="h-px bg-slate-100 my-1"></div>
+                                                            <button 
+                                                                onClick={() => handleRoleChange(doc, 'ADMIN')}
+                                                                className="text-left px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 rounded"
+                                                            >Tornar Administrador</button>
+                                                            <button 
+                                                                onClick={() => handleRoleChange(doc, 'DOCTOR')}
+                                                                className="text-left px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded"
+                                                            >Tornar Médico (Padrão)</button>
+                                                            <div className="h-px bg-slate-100 my-1"></div>
+                                                            <button 
+                                                                onClick={() => {
+                                                                    setEditingDoctor(doc);
+                                                                    setEditValue(doc.subscriptionValue ? Number(doc.subscriptionValue).toString() : "0");
+                                                                    setEditDate(doc.subscriptionExpiresAt ? new Date(doc.subscriptionExpiresAt).toISOString().split('T')[0] : "");
+                                                                }}
+                                                                className="text-left px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded"
+                                                            >Editar Mensalidade</button>
+                                                        </div>
+                                                    </div>
                                                     <button 
                                                         onClick={() => handleArchive(doc.id, false)}
                                                         className="text-xs font-bold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
@@ -385,6 +448,12 @@ export default function DoctorsTable() {
                 onConfirm={modalState.onConfirm}
                 onClose={hideModal}
             />
+
+            {toastMessage && (
+                <div className="fixed bottom-4 right-4 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-2xl font-bold z-[100] border-2 border-emerald-400">
+                    {toastMessage}
+                </div>
+            )}
         </div>
     );
 }

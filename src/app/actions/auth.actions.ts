@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { Plan } from '@prisma/client';
 
 /**
  * Registra um novo perfil médico com credenciais básicas.
@@ -35,7 +36,7 @@ export async function registerUser(data: { name: string, email: string, password
                 crm: "",
                 specialty: "",
                 role: "DOCTOR",
-                plan: "NORMAL",
+                plan: "NORMAL" as Plan,
                 isActive: true
             }
         });
@@ -46,7 +47,7 @@ export async function registerUser(data: { name: string, email: string, password
                 email: data.email,
                 name: data.name,
                 role: "DOCTOR",
-                plan: "NORMAL",
+                plan: "NORMAL" as Plan,
                 isActive: true
             }
         });

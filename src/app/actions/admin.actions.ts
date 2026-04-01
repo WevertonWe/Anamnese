@@ -58,12 +58,13 @@ export async function getDoctorsList(search: string = "", status: string = "ALL"
             crm: true,
             email: true,
             status: true,
+            plan: true,
             lastLoginAt: true,
             subscriptionExpiresAt: true,
             subscriptionValue: true,
             createdById: true,
             deletedAt: true
-        },
+        } as any,
         orderBy: { updatedAt: 'desc' }
     });
 
@@ -83,6 +84,99 @@ export async function updateDoctorStatus(id: string, newStatus: 'ACTIVE' | 'BLOC
     });
 
     return { success: true };
+}
+
+export async function updateUserPlan(targetUserId: string, newPlan: 'NORMAL' | 'PREMIUM' | 'ADMIN') {
+    const adminId = await getLoggedUserId();
+    if (!adminId) throw new Error("Não autorizado");
+
+    const caller = await prisma.doctorProfile.findUnique({ where: { id: adminId } });
+    if (caller?.role !== 'ADMIN') throw new Error("Acesso negado: Apenas administradores podem alterar planos.");
+
+    if (adminId === targetUserId && newPlan !== 'ADMIN') {
+        throw new Error("Proteção de Segurança: Você não pode remover seu próprio plano de Admin.");
+    }
+
+    try {
+        await prisma.doctorProfile.update({
+            where: { id: targetUserId },
+            data: { plan: newPlan } as any
+        });
+        
+        await prisma.user.update({
+            where: { id: targetUserId },
+            data: { plan: newPlan } as any
+        }).catch(() => {});
+        
+        return { success: true };
+    } catch(err) {
+        return { success: false, error: "Falha ao atualizar plano." };
+    }
+}
+
+export async function updateUserRole(targetUserId: string, newRole: 'DOCTOR' | 'ADMIN' | 'PATIENT') {
+    const adminId = await getLoggedUserId();
+    if (!adminId) throw new Error("Não autorizado");
+
+    const caller = await prisma.doctorProfile.findUnique({ where: { id: adminId } });
+    if (caller?.role !== 'ADMIN') throw new Error("Acesso negado.");
+
+    if (adminId === targetUserId && newRole !== 'ADMIN') {
+        throw new Error("Proteção de Segurança: Você não pode remover sua própria role de Admin.");
+    }
+
+    try {
+        await prisma.doctorProfile.update({
+            where: { id: targetUserId },
+            data: { role: newRole } as any
+        });
+        
+        await prisma.user.update({
+            where: { id: targetUserId },
+            data: { role: newRole } as any
+        }).catch(() => {});
+        
+        return { success: true };
+    } catch(err) {
+        return { success: false, error: "Falha ao atualizar função." };
+    }
+}
+
+export async function toggleUserStatus(targetUserId: string) {
+    const adminId = await getLoggedUserId();
+    if (!adminId) throw new Error("Não autorizado");
+
+    const caller = await prisma.doctorProfile.findUnique({ where: { id: adminId } });
+    if (caller?.role !== 'ADMIN') throw new Error("Acesso negado.");
+
+    if (adminId === targetUserId) {
+        throw new Error("Proteção de Segurança: Você não pode auto-bloquear seu acesso.");
+    }
+
+    const target = await prisma.doctorProfile.findUnique({ where: { id: targetUserId }});
+    if (!target) return { success: false, error: "Usuário não encontrado." };
+
+    const newStatus = target.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
+    const newIsActive = newStatus === 'ACTIVE';
+
+    try {
+        await prisma.doctorProfile.update({
+            where: { id: targetUserId },
+            data: { 
+                status: newStatus,
+                isActive: newIsActive
+            } as any
+        });
+        
+        await prisma.user.update({
+            where: { id: targetUserId },
+            data: { isActive: newIsActive } as any
+        }).catch(() => {});
+
+        return { success: true, newStatus };
+    } catch(err) {
+        return { success: false, error: "Falha ao alterar status." };
+    }
 }
 
 export async function archiveDoctorProfile(id: string, isRestore = false) {
@@ -148,6 +242,7 @@ export async function createDoctorWithBranding(data: {
     subscriptionExpiresAt?: Date | null;
     logoBase64?: string | null;
     signatureBase64?: string | null;
+    plan?: 'NORMAL' | 'PREMIUM';
 }) {
     const adminId = await getLoggedUserId();
     if (!adminId) throw new Error("Não autorizado");
@@ -184,7 +279,7 @@ export async function createDoctorWithBranding(data: {
     }
 
     // Criar perfil no Prisma
-    await prisma.doctorProfile.create({
+    const newDoctor = await prisma.doctorProfile.create({
         data: {
             fullName: data.fullName,
             crm: data.crm,
@@ -194,10 +289,22 @@ export async function createDoctorWithBranding(data: {
             subscriptionValue: data.subscriptionValue,
             subscriptionExpiresAt: data.subscriptionExpiresAt,
             status: 'ACTIVE',
+            plan: data.plan || 'NORMAL',
             createdById: adminId,
             logoUrl,
             signatureImage,
-        }
+        } as any
+    });
+
+    await prisma.user.create({
+        data: {
+            id: newDoctor.id,
+            email: data.email,
+            name: data.fullName,
+            role: "DOCTOR",
+            plan: data.plan || 'NORMAL',
+            isActive: true
+        } as any
     });
 
     return { 
