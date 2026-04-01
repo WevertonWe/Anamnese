@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { createTemplate } from '@/app/actions/template.actions';
 import { generateTemplateStructure } from '@/app/actions/aiTemplate.actions';
 import Modal from '@/components/ui/Modal';
-import AudioRecorder from '@/components/AudioRecorder';
+import AudioRecorder from '@/components/medical/AudioRecorder';
 import { useTranslations } from 'next-intl';
 
 export default function TemplateEditor() {

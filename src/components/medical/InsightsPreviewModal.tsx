@@ -16,6 +16,16 @@ interface InsightsPreviewModalProps {
     onClose: () => void;
 }
 
+/**
+ * Janela Modal (Glassmorphism) com cruzamento de inteligência.
+ * Além de espelhar as caixas de texto, roda rotinas independentes via Recharts (IMC Tracker),
+ * propõe identificadores de CID prováveis e sugere condutas terapêuticas baseando-se no cruzamento 
+ * do relato recém inserido contra os laudos e históricos anteriores via chamada ServerSide.
+ * 
+ * @param formData O dicionário React_State populado organicamente.
+ * @param templateSchema Regras puras para exibição das labels de colunas na Visualização "Preenchida".
+ * @param onExport Callback invocando renderização final (Compacta ou Completa) em PDF.
+ */
 export default function InsightsPreviewModal({
     isOpen, formData, templateSchema, templateId, patientName, consultDate, onExport, onEmail, onClose
 }: InsightsPreviewModalProps) {

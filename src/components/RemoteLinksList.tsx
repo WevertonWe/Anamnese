@@ -5,7 +5,7 @@ import { getHistory, deleteRecord } from '@/app/actions/history.actions';
 import Modal from '@/components/ui/Modal';
 import { useTranslations } from 'next-intl';
 
-export default function RemoteLinksList({ refreshTrigger = 0 }: { refreshTrigger?: number }) {
+export default function RemoteLinksList({ refreshTrigger = 0, privacyMode = false }: { refreshTrigger?: number, privacyMode?: boolean }) {
     const t = useTranslations('ConsultasList');
     const [records, setRecords] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -95,7 +95,7 @@ export default function RemoteLinksList({ refreshTrigger = 0 }: { refreshTrigger
                         const statusUI = getStatusStyle(record.status);
                         return (
                             <tr key={record.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-6 py-4 font-bold text-slate-800">
+                                <td className={`px-6 py-4 font-bold text-slate-800 ${privacyMode ? 'blur-sm select-none' : ''}`}>
                                     {record.patientName}
                                 </td>
                                 <td className="px-6 py-4 text-slate-600">

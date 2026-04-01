@@ -5,17 +5,16 @@ import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-    const role = await getUserRole();
-    if (role !== 'ADMIN') {
+    const userId = await getLoggedUserId();
+    if (!userId) redirect('/login');
+
+    const profile = await prisma.doctorProfile.findUnique({ where: { id: userId } });
+    if (!profile || profile.role !== 'ADMIN') {
         redirect('/');
     }
 
-    const userId = await getLoggedUserId();
-    let userEmail = 'Unknown';
-    if (userId) {
-        const profile = await prisma.doctorProfile.findUnique({ where: { id: userId } });
-        if (profile) userEmail = profile.email;
-    }
+    let userEmail = profile.email;
+    // O email já foi extraído acima
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">

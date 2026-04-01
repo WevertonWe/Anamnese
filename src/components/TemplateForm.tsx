@@ -4,32 +4,21 @@ import { useState, useEffect } from 'react';
 import { getUserRole } from '@/app/actions/auth.actions';
 import { saveRecord } from '@/app/actions/history.actions';
 import { exportAnamneseToPDF } from '@/lib/exportPdf';
-import AudioRecorder from './AudioRecorder';
-import InsightsPreviewModal from './InsightsPreviewModal';
+import AudioRecorder from './medical/AudioRecorder';
+import InsightsPreviewModal from './medical/InsightsPreviewModal';
 import Modal from '@/components/ui/Modal';
 import UnifiedModal, { useUnifiedModal } from '@/components/ui/unified-modal';
 import { generateRemoteLink } from '@/app/actions/history.actions';
 import { useTranslations, useLocale } from 'next-intl';
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import dynamic from 'next/dynamic';
 
-// Funções utílitarias para o IMC
-const parsePeso = (str: string) => {
-    if (!str) return null;
-    const match = str.replace(',', '.').match(/[\d.]+/);
-    return match ? parseFloat(match[0]) : null;
-};
-const parseAltura = (str: string) => {
-    if (!str) return null;
-    let match = str.replace(',', '.').match(/[\d.]+/);
-    if (!match) return null;
-    let val = parseFloat(match[0]);
-    if (val > 3) val = val / 100; // cm to m
-    return val;
-};
-const calcularIMC = (peso: number | null, altura: number | null) => {
-    if (!peso || !altura) return null;
-    return (peso / (altura * altura)).toFixed(1);
-};
+const AreaChart = dynamic(() => import('recharts').then(mod => mod.AreaChart), { ssr: false });
+const Area = dynamic(() => import('recharts').then(mod => mod.Area), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false });
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
+
+import { parsePeso, parseAltura, calcularIMC } from '../utils/imc';
 
 export default function TemplateForm({ templateId, incomingAiData, editId, onSaved, onReviewRequest }: { templateId: string, incomingAiData?: any, editId?: string, onSaved?: () => void, onReviewRequest?: (data: any) => void }) {
     const t = useTranslations('TemplateForm');
@@ -40,6 +29,7 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
     const [patientName, setPatientName] = useState('');
     const [consultDate, setConsultDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [isSaving, setIsSaving] = useState(false);
+    const [plan, setPlan] = useState('NORMAL');
 
     // Patient History States
     const [patientHistory, setPatientHistory] = useState<any>(null);
@@ -91,6 +81,9 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
     useEffect(() => {
         getUserRole().then(r => {
             if (r) setRole(r);
+        });
+        import('@/app/actions/profile.actions').then(m => m.getDoctorProfile()).then(p => {
+            if (p) setPlan((p as any).plan);
         });
     }, []);
 
@@ -203,13 +196,13 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
         fetchPatientHistory(patientName);
     };
 
-    // Auto-search history when name is long enough and typing stops for 1s
+    // Auto-search history when name is long enough and typing stops for 500ms
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (patientName && patientName.length >= 3) {
                 fetchPatientHistory(patientName);
             }
-        }, 1000);
+        }, 500);
         return () => clearTimeout(timeoutId);
     }, [patientName]);
 
@@ -231,7 +224,15 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
                 importableKeys.forEach(k => {
                     const foundKey = Object.keys(dataToImport).find(key => key.toLowerCase().includes(k) || k.includes(key.toLowerCase()));
                     if (foundKey && dataToImport[foundKey]) {
-                        merged[foundKey] = dataToImport[foundKey];
+                        if (merged[foundKey] && merged[foundKey].trim() !== '') {
+                            // Already has text typed by user
+                            if (!merged[foundKey].includes(dataToImport[foundKey])) {
+                                merged[foundKey] = `${merged[foundKey]}\n[Histórico]: ${dataToImport[foundKey]}`;
+                            }
+                        } else {
+                            // Blank field, fill it
+                            merged[foundKey] = dataToImport[foundKey];
+                        }
                         importedCount++;
                     }
                 });
@@ -271,10 +272,15 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
                 <div className="flex flex-col relative">
                     <div className="flex justify-between items-end mb-2 px-1">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('patientName')}</label>
-                        {patientHistory && (
+                        {patientHistory && plan !== 'NORMAL' && (
                             <button onClick={importLastData} className="text-[9px] text-emerald-600 bg-emerald-50 hover:bg-emerald-100 font-black uppercase tracking-widest border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1 transition-colors active:scale-95">
                                 ⚡ Puxar Dados Base
                             </button>
+                        )}
+                        {patientHistory && plan === 'NORMAL' && (
+                            <span className="text-[9px] text-slate-400 font-bold flex items-center gap-1" title="Disponível no plano PREMIUM">
+                                🔒 Puxar Dados Base
+                            </span>
                         )}
                     </div>
                     <div className="relative">
@@ -371,8 +377,8 @@ export default function TemplateForm({ templateId, incomingAiData, editId, onSav
                             return (
                                 <div className="mt-8 ml-2 pr-4">
                                     <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Evolução Ponderal</h4>
-                                    <div className="h-24 w-full bg-slate-50 border border-slate-100 rounded-xl p-2 pb-0 pt-4">
-                                        <ResponsiveContainer width="100%" height="100%">
+                                    <div className="h-24 w-full bg-slate-50 border border-slate-100 rounded-xl p-2 pb-0 pt-4 pl-0 overflow-hidden">
+                                        <ResponsiveContainer width="99%" height="100%">
                                             <AreaChart data={chartData}>
                                                 <defs>
                                                     <linearGradient id="colorPeso" x1="0" y1="0" x2="0" y2="1">

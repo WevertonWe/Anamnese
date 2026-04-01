@@ -1,11 +1,20 @@
 'use client';
 
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateAnamnesis } from '@/app/actions/anamnese.actions';
 import Modal from '@/components/ui/Modal';
 
-export default function AudioRecorder({ templateFields = [], onResult, minimal = false, variant = 'minimal', isModalActive = false }: { templateFields?: any[], onResult?: (data: any) => void, minimal?: boolean, variant?: 'minimal' | 'card' | 'floating', isModalActive?: boolean }) {
+/**
+ * Componente Core de captura vocal acoplado a LLM.
+ * Controla os percursos de Web Audio API, grava os streams e caso autorizado via plano SaaS,
+ * repassa blobs diretos ao pipeline do Gemini pra decodificação clínica imediata.
+ * 
+ * @param templateFields Campos esquemáticos para forçar formatação final condizente.
+ * @param onResult Callback ascendente contendo a anamnese já transcrita e estruturada em chaves JSON.
+ * @param minimal Variável estética para exibição enxuta ou flutuante.
+ */
+function AudioRecorder({ templateFields = [], onResult, minimal = false, variant = 'minimal', isModalActive = false }: { templateFields?: any[], onResult?: (data: any) => void, minimal?: boolean, variant?: 'minimal' | 'card' | 'floating', isModalActive?: boolean }) {
     const { isRecording, startRecording, stopRecording, audioBlob, resetAudio, liveTranscription } = useAudioRecorder();
     const [seconds, setSeconds] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -16,6 +25,14 @@ export default function AudioRecorder({ templateFields = [], onResult, minimal =
         isOpen: false, title: '', message: '', type: 'info'
     });
     const [isExporting, setIsExporting] = useState(false);
+    const [plan, setPlan] = useState<string | null>(null);
+
+    useEffect(() => {
+        import('@/app/actions/profile.actions').then(m => m.getDoctorProfile()).then(p => {
+            if (p) setPlan((p as any).plan);
+            else setPlan('NORMAL');
+        });
+    }, []);
 
 
     useEffect(() => {
@@ -65,11 +82,39 @@ export default function AudioRecorder({ templateFields = [], onResult, minimal =
     // Reinforce visibility hidden via CSS if modal is active
     const visibilityClasses = isModalActive ? 'hidden opacity-0 pointer-events-none' : '';
 
+    if (plan === 'NORMAL') {
+        return (
+            <div className={`flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-2xl w-full text-center ${visibilityClasses}`}>
+                <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center mb-3">
+                    <span className="text-xl">🔒</span>
+                </div>
+                <h3 className="text-sm font-bold text-slate-700">Recurso Bloqueado</h3>
+                <p className="text-xs text-slate-500 mt-1 mb-4">A transcrição de áudio com IA requer plano Premium.</p>
+                <button
+                    onClick={() => {
+                        import('@/app/actions/auth.actions').then(async m => {
+                            const { getLoggedUserId } = await import('@/app/actions/auth.actions');
+                            const uid = await getLoggedUserId();
+                            if(uid) {
+                                await m.upgradeToPremium(uid);
+                                setPlan('PREMIUM');
+                                alert('Você simulou o Upgrade para PREMIUM! Aproveite.');
+                            }
+                        });
+                    }}
+                    className="bg-emerald-600 text-white px-4 py-2 text-xs font-bold rounded-lg hover:bg-emerald-700 transition"
+                >
+                    Seja Premium para ouvir consultas
+                </button>
+            </div>
+        );
+    }
+
     // Floating Sticky Bar View
     if (variant === 'floating') {
         return (
-            <div className={`relative w-full transition-all duration-500 ease-in-out ${visibilityClasses}`}>
-                <div className={`glass rounded-2xl shadow-2xl overflow-hidden border border-white/40 ${isExpanded ? 'w-full h-auto' : 'w-full h-16'}`}>
+            <div className={`relative w-full flex justify-center transition-all duration-500 ease-in-out ${visibilityClasses}`}>
+                <div className={`glass rounded-2xl shadow-2xl overflow-hidden border border-white/40 w-[92%] md:w-full ${isExpanded ? 'h-auto' : 'h-16'}`}>
                     {!isExpanded ? (
                         <button 
                             onClick={() => setIsExpanded(true)}
@@ -107,7 +152,7 @@ export default function AudioRecorder({ templateFields = [], onResult, minimal =
                                 </div>
                                 <button 
                                     onClick={() => setIsExpanded(false)}
-                                    className="text-slate-400 hover:text-white transition-colors"
+                                    className="text-slate-400 hover:text-white transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -356,7 +401,7 @@ export default function AudioRecorder({ templateFields = [], onResult, minimal =
                                                     <p className="text-[10px] text-emerald-600 uppercase font-bold tracking-widest">Clique abaixo para processar</p>
                                                 </div>
                                             </div>
-                                            <button onClick={resetAudio} className="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors">
+                                            <button onClick={resetAudio} className="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
@@ -427,7 +472,7 @@ export default function AudioRecorder({ templateFields = [], onResult, minimal =
                             <div className="absolute inset-0 bg-red-500 rounded-full opacity-40 animate-pulse"></div>
                             <button
                                 onClick={stopRecording}
-                                className={`relative z-10 flex items-center justify-center bg-red-600 rounded-full transition ${minimal ? 'w-10 h-10' : 'w-16 h-16 shadow-lg'}`}
+                                className={`relative z-10 flex items-center justify-center bg-red-600 rounded-full transition min-w-[44px] min-h-[44px] ${minimal ? 'w-11 h-11' : 'w-16 h-16 shadow-lg'}`}
                                 aria-label="Parar gravação"
                             >
                                 <div className={`bg-white rounded-sm ${minimal ? 'w-3.5 h-3.5' : 'w-6 h-6'}`}></div>
@@ -548,4 +593,6 @@ export default function AudioRecorder({ templateFields = [], onResult, minimal =
         </div>
     );
 }
+
+export default React.memo(AudioRecorder);
 

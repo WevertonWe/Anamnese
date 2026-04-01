@@ -8,8 +8,8 @@ import ConsultasList from "@/components/ConsultasList";
 import RemoteLinksList from "@/components/RemoteLinksList";
 import HeaderSettings from "@/components/HeaderSettings";
 import ClinicalDashboard from "@/components/ClinicalDashboard";
-import AudioRecorder from "@/components/AudioRecorder";
-import InsightsPreviewModal from "@/components/InsightsPreviewModal";
+import AudioRecorder from "@/components/medical/AudioRecorder";
+import InsightsPreviewModal from "@/components/medical/InsightsPreviewModal";
 import { useTranslations, useLocale } from 'next-intl';
 
 export default function HomeClient({ initialTemplates }: { initialTemplates: any[] }) {
@@ -19,6 +19,7 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(initialTemplates.length > 0 ? String(initialTemplates[0].id) : "mock_1");
   const [refreshHistoryTrigger, setRefreshHistoryTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState<'consults' | 'links'>('consults');
+  const [privacyMode, setPrivacyMode] = useState(false);
 
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState<{
@@ -78,7 +79,7 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
       <HeaderSettings />
       
 
-      <main className="w-full max-w-5xl flex flex-col gap-12 pt-20">
+      <main className="w-full max-w-5xl flex flex-col gap-12 pt-20 px-4 sm:px-0" aria-label="Main content">
         
         {/* Header Section */}
         <motion.header 
@@ -146,7 +147,7 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
           </div>
 
           {/* Sidebar / Selector */}
-          <div className="lg:col-span-4 lg:sticky lg:top-24 w-full">
+          <div className="lg:col-span-4 lg:sticky lg:top-24 w-full order-last lg:order-none mt-4 lg:mt-0">
             <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm flex flex-col h-full max-h-[80vh] lg:max-h-[calc(100vh-180px)]">
                 <div className="flex items-center gap-2 mb-6">
                     <div className="w-1.5 h-6 bg-primary rounded-full"></div>
@@ -183,9 +184,19 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
                 {activeTab === 'links' && <motion.div layoutId="tab-underline" className="absolute -bottom-6 left-0 w-full h-1 bg-primary rounded-full"></motion.div>}
                 </button>
             </div>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                <span className="text-slate-600 text-xs font-black uppercase tracking-widest">{t('localBadge')}</span>
+            <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setPrivacyMode(!privacyMode)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-2xl border transition-all ${privacyMode ? 'bg-primary/10 border-primary text-primary' : 'bg-white border-slate-200 text-slate-500 shadow-sm'}`}
+                  title="Modo Privacidade"
+                >
+                  <span className="text-lg">{privacyMode ? '👁️‍🗨️' : '👁️'}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Modo Privacidade</span>
+                </button>
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    <span className="text-slate-600 text-xs font-black uppercase tracking-widest">{t('localBadge')}</span>
+                </div>
             </div>
           </div>
           
@@ -200,6 +211,7 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
                 {activeTab === 'consults' ? (
                 <ConsultasList 
                     refreshTrigger={refreshHistoryTrigger} 
+                    privacyMode={privacyMode}
                     onReview={(record) => handleOpenReview({
                     record,
                     formData: record.data,
@@ -210,7 +222,7 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
                     })}
                 />
                 ) : (
-                <RemoteLinksList refreshTrigger={refreshHistoryTrigger} />
+                <RemoteLinksList refreshTrigger={refreshHistoryTrigger} privacyMode={privacyMode} />
                 )}
             </motion.div>
           </AnimatePresence>

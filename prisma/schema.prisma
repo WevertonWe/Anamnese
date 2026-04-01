@@ -23,11 +23,20 @@ enum RecordStatus {
   COMPLETED
 }
 
+enum Plan {
+  NORMAL
+  PREMIUM
+  ADMIN
+}
+
 model User {
   id        String     @id @default(cuid())
   email     String     @unique
   name      String
   role      Role       @default(DOCTOR)
+  plan      Plan       @default(NORMAL)
+  isActive  Boolean    @default(true)
+  expiresAt DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   
@@ -59,6 +68,9 @@ model DoctorProfile {
   
   // SaaS Admin Fields
   status                 DoctorStatus @default(ACTIVE)
+  plan                   Plan     @default(NORMAL)
+  isActive               Boolean  @default(true)
+  expiresAt              DateTime?
   subscriptionValue      Decimal?
   subscriptionExpiresAt  DateTime?
   lastLoginAt            DateTime?

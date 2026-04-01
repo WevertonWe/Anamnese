@@ -7,7 +7,7 @@ import Modal from '@/components/ui/Modal';
 import { exportAnamneseToPDF } from '@/lib/exportPdf';
 import { useTranslations } from 'next-intl';
 
-export default function ConsultasList({ refreshTrigger = 0, onReview }: { refreshTrigger?: number, onReview?: (record: any) => void }) {
+export default function ConsultasList({ refreshTrigger = 0, privacyMode = false, onReview }: { refreshTrigger?: number, privacyMode?: boolean, onReview?: (record: any) => void }) {
     const t = useTranslations('ConsultasList');
     const [records, setRecords] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -71,7 +71,7 @@ export default function ConsultasList({ refreshTrigger = 0, onReview }: { refres
                 <div key={record.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-white/40 backdrop-blur-sm border border-white/60 rounded-[2rem] shadow-sm hover:shadow-md hover:bg-white/80 transition-all group border-slate-100">
                     <div className="flex-1 mb-4 sm:mb-0 relative pr-4">
                         <div className="flex items-center gap-3">
-                            <h4 className="font-black text-slate-900 tracking-tight text-base">{record.patientName}</h4>
+                            <h4 className={`font-black text-slate-900 tracking-tight text-base ${privacyMode ? 'blur-sm select-none' : ''}`}>{record.patientName}</h4>
                             {!record.isRead && (
                                 <span className="flex h-2.5 w-2.5 relative">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
