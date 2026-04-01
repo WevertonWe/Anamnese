@@ -14,12 +14,20 @@ import bcrypt from 'bcryptjs';
  */
 export async function registerUser(data: { name: string, email: string, password: string }) {
     try {
-        const existing = await prisma.doctorProfile.findFirst({ where: { email: data.email } });
-        if (existing) return { success: false, error: "E-mail já cadastrado." };
+        const existingDoc = await prisma.doctorProfile.findFirst({ 
+            where: { email: data.email },
+            select: { id: true }
+        });
+        const existingUser = await prisma.user.findFirst({ 
+            where: { email: data.email },
+            select: { id: true }
+        });
+        
+        if (existingDoc || existingUser) return { success: false, error: "E-mail já cadastrado." };
 
         const passwordHash = await bcrypt.hash(data.password, 10);
 
-        await prisma.doctorProfile.create({
+        const newDoctor = await prisma.doctorProfile.create({
             data: {
                 email: data.email,
                 passwordHash,
@@ -29,7 +37,18 @@ export async function registerUser(data: { name: string, email: string, password
                 role: "DOCTOR",
                 plan: "NORMAL",
                 isActive: true
-            } as any
+            }
+        });
+
+        await prisma.user.create({
+            data: {
+                id: newDoctor.id,
+                email: data.email,
+                name: data.name,
+                role: "DOCTOR",
+                plan: "NORMAL",
+                isActive: true
+            }
         });
 
         return await loginUserWithCredentials(data.email, data.password);
@@ -49,7 +68,15 @@ export async function registerUser(data: { name: string, email: string, password
  */
 export async function loginUserWithCredentials(email: string, password: string) {
     try {
-        const profile = await prisma.doctorProfile.findFirst({ where: { email } });
+        const profile = await prisma.doctorProfile.findFirst({
+            where: { email },
+            select: {
+                id: true,
+                passwordHash: true,
+                status: true,
+                role: true
+            }
+        });
         if (!profile || !profile.passwordHash) return { success: false, error: "Credenciais inválidas." };
 
         const isValid = await bcrypt.compare(password, profile.passwordHash);
