@@ -164,9 +164,9 @@ export async function upgradeToPremium(userId: string) {
         await prisma.doctorProfile.update({
             where: { id: userId },
             data: {
-                plan: "PREMIUM",
+                plan: "PREMIUM" as Plan,
                 expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-            } as any
+            }
         });
         return { success: true };
     } catch(err) {
