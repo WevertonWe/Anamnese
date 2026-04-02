@@ -26,13 +26,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Anamnese Pro - Gestão Médica",
-  description: "Sistema médico SaaS com anamnese IA, gestão de pacientes e templates flexíveis.",
+  title: "Vitalis AI - Gestão Médica",
+  description: "Plataforma médica SaaS com anamnese em IA, gestão de pacientes e templates flexíveis.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Anamnese",
+    title: "Vitalis AI",
   },
   formatDetection: {
     telephone: false,
@@ -54,7 +54,7 @@ export default async function RootLayout({
       >
         {/* Noise Texture for Depth */}
         <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-[9999] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat"></div>
-        
+
         {/* Subtle Ambient Glows */}
         <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>
         <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>

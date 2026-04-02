@@ -21,10 +21,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             {/* Admin Sidebar */}
             <aside className="w-64 flex-shrink-0 bg-slate-900 text-slate-100 flex flex-col sticky top-0 h-screen">
                 <div className="p-6 border-b border-slate-800">
-                    <h1 className="text-xl font-bold text-white tracking-tight">SaaS Admin</h1>
-                    <p className="text-xs text-slate-400 mt-1">Anamnese Inteligente</p>
+                    <h1 className="text-xl font-bold text-white tracking-tight">Vitalis AI</h1>
+                    <p className="text-xs text-slate-400 mt-1">Plataforma Clínica Inteligente</p>
                 </div>
-                
+
                 <div className="p-4 border-b border-slate-800">
                     <Link href="/" className="px-4 py-2.5 rounded-lg text-slate-400 font-medium hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>

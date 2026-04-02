@@ -87,9 +87,6 @@ export default function HomeClient({ initialTemplates }: { initialTemplates: any
           animate={{ opacity: 1, y: 0 }}
           className="text-center space-y-3"
         >
-          <div className="inline-block bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2">
-            Plataforma Médica Inteligente
-          </div>
           <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight">
             {t('title').split(' ')[0]} <span className="text-primary">{t('title').split(' ').slice(1).join(' ')}</span>
           </h1>
