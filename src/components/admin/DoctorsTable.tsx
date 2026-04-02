@@ -223,14 +223,17 @@ export default function DoctorsTable() {
                             return (
                                 <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="pl-4 pr-4 py-3">
-                                        <div className="font-bold text-slate-800 whitespace-nowrap">{doc.fullName}</div>
+                                        <div className="font-bold text-slate-800 whitespace-nowrap flex items-center">
+                                            {doc.fullName}
+                                            {(doc.role === 'ADMIN' || doc.email === 'wevwilson1@hotmail.com') && (
+                                                <span className="ml-2 text-[10px] text-indigo-600 font-bold uppercase bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">[Admin]</span>
+                                            )}
+                                        </div>
                                         <div className="text-sm text-slate-500 break-words">{doc.email}</div>
                                         <div className="text-xs text-slate-400 mt-1">CRM: {doc.crm || 'N/A'}</div>
                                     </td>
                                     <td className="py-3 align-middle">
-                                        {(doc.role === 'ADMIN' || doc.email === 'wevwilson1@hotmail.com') ? (
-                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">ADMIN</span>
-                                        ) : doc.plan === 'PREMIUM' ? (
+                                        {doc.plan === 'PREMIUM' ? (
                                             <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">PREMIUM</span>
                                         ) : (
                                             <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">NORMAL</span>

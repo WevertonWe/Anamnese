@@ -101,10 +101,12 @@ export async function updateUserPlan(targetUserId: string, newPlan: 'NORMAL' | '
     }
 
     try {
-        await prisma.doctorProfile.update({
+        const res = await prisma.doctorProfile.update({
             where: { id: targetUserId },
             data: { plan: newPlan as Plan }
         });
+        
+        console.log("Plano atualizado no banco:", res.plan);
         
         await prisma.user.update({
             where: { id: targetUserId },
