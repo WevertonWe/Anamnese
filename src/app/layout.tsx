@@ -60,10 +60,9 @@ export default async function RootLayout({
         <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>
 
         <NextIntlClientProvider messages={messages}>
-          <main className="relative z-10 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative z-10 w-full min-h-screen flex flex-col">
             {children}
-
-          </main>
+          </div>
         </NextIntlClientProvider>
       </body>
     </html>

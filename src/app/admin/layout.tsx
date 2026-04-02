@@ -17,9 +17,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     // O email já foi extraído acima
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50">
+        <div className="flex w-full h-screen overflow-hidden bg-slate-900">
             {/* Admin Sidebar */}
-            <aside className="w-64 bg-slate-900 flex-shrink-0 text-slate-100 flex flex-col">
+            <aside className="w-64 flex-shrink-0 bg-slate-900 text-slate-100 flex flex-col sticky top-0 h-screen">
                 <div className="p-6 border-b border-slate-800">
                     <h1 className="text-xl font-bold text-white tracking-tight">SaaS Admin</h1>
                     <p className="text-xs text-slate-400 mt-1">Anamnese Inteligente</p>
@@ -46,8 +46,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto p-8">
-                <div className="w-full">
+            <main className="flex-1 bg-slate-50 overflow-y-auto min-h-screen">
+                <div className="p-8 w-full">
                     {children}
                 </div>
             </main>

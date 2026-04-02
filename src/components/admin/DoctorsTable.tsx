@@ -98,10 +98,12 @@ export default function DoctorsTable() {
         if (!editingDoctor) return;
         
         const numValue = editValue ? parseFloat(editValue) : 0;
-        const dateObj = editDate ? new Date(editDate) : null;
+        // Evitando timezone offset bug usando T12:00:00
+        const dateObj = editDate ? new Date(`${editDate}T12:00:00`) : null;
         
         await updateDoctorSubscription(editingDoctor.id, numValue, dateObj);
         setEditingDoctor(null);
+        showToast(`Mensalidade de ${editingDoctor.fullName} atualizada com sucesso!`);
         loadDoctors();
     };
 
@@ -124,7 +126,7 @@ export default function DoctorsTable() {
     const visibleDoctors = doctors.filter(d => activeTab === 'EXCLUIDOS' ? d.deletedAt : !d.deletedAt);
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col flex-1 h-full min-h-0">
             {/* Nav Tabs */}
             {deletedDoctors.length > 0 && (
                 <div className="flex border-b border-slate-100 bg-slate-50/50">
@@ -176,11 +178,11 @@ export default function DoctorsTable() {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                    <thead>
+            <div className="overflow-x-auto overflow-y-auto flex-1 min-h-[500px] bg-white">
+                <table className="w-full text-left border-collapse bg-white">
+                    <thead className="sticky top-0 z-10 shadow-sm border-b border-slate-200">
                         <tr className="bg-slate-50 text-slate-500 text-sm uppercase tracking-wider">
-                            <th className="p-4 font-semibold border-b border-slate-100 w-1/4">Médico</th>
+                            <th className="pl-4 pr-4 py-4 font-semibold border-b border-slate-100 w-1/4">Médico</th>
                             <th className="py-4 font-semibold border-b border-slate-100 w-[12%]">Plano</th>
                             <th className="py-4 font-semibold border-b border-slate-100 w-[13%]">Status</th>
                             {activeTab === 'ATIVOS' ? (
@@ -220,13 +222,13 @@ export default function DoctorsTable() {
 
                             return (
                                 <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-4">
+                                    <td className="pl-4 pr-4 py-3">
                                         <div className="font-bold text-slate-800 whitespace-nowrap">{doc.fullName}</div>
                                         <div className="text-sm text-slate-500 break-words">{doc.email}</div>
                                         <div className="text-xs text-slate-400 mt-1">CRM: {doc.crm || 'N/A'}</div>
                                     </td>
-                                    <td className="py-4 align-top pt-5">
-                                        {doc.role === 'ADMIN' || doc.plan === 'ADMIN' ? (
+                                    <td className="py-3 align-middle">
+                                        {(doc.role === 'ADMIN' || doc.email === 'wevwilson1@hotmail.com') ? (
                                             <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">ADMIN</span>
                                         ) : doc.plan === 'PREMIUM' ? (
                                             <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">PREMIUM</span>
@@ -234,7 +236,7 @@ export default function DoctorsTable() {
                                             <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">NORMAL</span>
                                         )}
                                     </td>
-                                    <td className="py-4 align-top pt-5">
+                                    <td className="py-3 align-middle">
                                         {doc.deletedAt ? (
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800">
                                                 ARQUIVADO
@@ -248,7 +250,7 @@ export default function DoctorsTable() {
                                     
                                     {activeTab === 'ATIVOS' ? (
                                         <>
-                                            <td className="p-4">
+                                            <td className="px-4 py-3">
                                                 <div className="text-sm font-medium text-slate-800">
                                                     {doc.subscriptionValue ? `R$ ${Number(doc.subscriptionValue).toFixed(2)}` : 'R$ 0.00'}
                                                 </div>
@@ -257,14 +259,14 @@ export default function DoctorsTable() {
                                                     {isExpired && ' (VENCIDA)'}
                                                 </div>
                                             </td>
-                                            <td className="p-4">
+                                            <td className="px-4 py-3">
                                                 <div className="text-sm text-slate-600">
                                                     {doc.lastLoginAt ? new Date(doc.lastLoginAt).toLocaleString('pt-BR') : 'Nunca acessou'}
                                                 </div>
                                             </td>
                                         </>
                                     ) : (
-                                        <td className="p-4">
+                                        <td className="px-4 py-3">
                                             <div className="text-sm font-medium text-red-600 flex items-center gap-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                 Remoção em {daysLeft} dias
@@ -273,7 +275,7 @@ export default function DoctorsTable() {
                                         </td>
                                     )}
 
-                                    <td className="pl-2 pr-4 py-4">
+                                    <td className="pl-2 pr-4 py-3">
                                         <div className="flex flex-col xl:flex-row gap-2 justify-end">
                                             {activeTab === 'EXCLUIDOS' ? (
                                                 <>
@@ -303,7 +305,7 @@ export default function DoctorsTable() {
                                                         <button className="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors flex items-center gap-1">
                                                             Gerenciar Plano ▼
                                                         </button>
-                                                        <div className="absolute top-full right-0 mt-1 hidden group-hover:flex flex-col bg-white border border-slate-200 rounded-lg shadow-xl z-20 p-1 min-w-[170px]">
+                                                        <div className="absolute top-full right-0 mt-1 hidden group-hover:flex flex-col bg-white border border-slate-200 rounded-lg shadow-xl z-[100] p-1 min-w-[170px]">
                                                             <button 
                                                                 onClick={() => handlePlanChange(doc, 'NORMAL')}
                                                                 className="text-left px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 rounded"

@@ -4,6 +4,8 @@ import prisma from '@/lib/prisma';
 import { getLoggedUserId } from './auth.actions';
 import bcrypt from 'bcryptjs';
 import { supabase } from '@/lib/supabase-client';
+import { Plan, Role } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
 export async function getAdminDashStats() {
     const adminId = await getLoggedUserId();
@@ -63,8 +65,9 @@ export async function getDoctorsList(search: string = "", status: string = "ALL"
             subscriptionExpiresAt: true,
             subscriptionValue: true,
             createdById: true,
-            deletedAt: true
-        } as any,
+            deletedAt: true,
+            role: true
+        },
         orderBy: { updatedAt: 'desc' }
     });
 
@@ -100,14 +103,15 @@ export async function updateUserPlan(targetUserId: string, newPlan: 'NORMAL' | '
     try {
         await prisma.doctorProfile.update({
             where: { id: targetUserId },
-            data: { plan: newPlan } as any
+            data: { plan: newPlan as Plan }
         });
         
         await prisma.user.update({
             where: { id: targetUserId },
-            data: { plan: newPlan } as any
+            data: { plan: newPlan as Plan }
         }).catch(() => {});
         
+        revalidatePath("/admin/users");
         return { success: true };
     } catch(err) {
         return { success: false, error: "Falha ao atualizar plano." };
@@ -128,12 +132,12 @@ export async function updateUserRole(targetUserId: string, newRole: 'DOCTOR' | '
     try {
         await prisma.doctorProfile.update({
             where: { id: targetUserId },
-            data: { role: newRole } as any
+            data: { role: newRole as Role }
         });
         
         await prisma.user.update({
             where: { id: targetUserId },
-            data: { role: newRole } as any
+            data: { role: newRole as Role }
         }).catch(() => {});
         
         return { success: true };
@@ -165,14 +169,15 @@ export async function toggleUserStatus(targetUserId: string) {
             data: { 
                 status: newStatus,
                 isActive: newIsActive
-            } as any
+            }
         });
         
         await prisma.user.update({
             where: { id: targetUserId },
-            data: { isActive: newIsActive } as any
+            data: { isActive: newIsActive }
         }).catch(() => {});
 
+        revalidatePath("/admin/users");
         return { success: true, newStatus };
     } catch(err) {
         return { success: false, error: "Falha ao alterar status." };
@@ -293,7 +298,7 @@ export async function createDoctorWithBranding(data: {
             createdById: adminId,
             logoUrl,
             signatureImage,
-        } as any
+        }
     });
 
     await prisma.user.create({
@@ -301,10 +306,10 @@ export async function createDoctorWithBranding(data: {
             id: newDoctor.id,
             email: data.email,
             name: data.fullName,
-            role: "DOCTOR",
-            plan: data.plan || 'NORMAL',
+            role: "DOCTOR" as Role,
+            plan: (data.plan as Plan) || ("NORMAL" as Plan),
             isActive: true
-        } as any
+        }
     });
 
     return { 
